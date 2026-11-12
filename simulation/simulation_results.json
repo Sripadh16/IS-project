@@ -1,139 +1,3847 @@
 {
-    "simulation_parameters": {
-        "l1_hit_latency_cycles": 4,
-        "l2_hit_latency_cycles": 12,
-        "llc_hit_latency_cycles": 38,
-        "ehb_hit_latency_cycles": 40,
-        "dram_latency_cycles": 200,
-        "ct_flush_latency_cycles": 70,
-        "random_guess_expectation_percent": 6.25,
-        "num_seeds": 5,
-        "seeds": [
-            101,
-            202,
-            303,
-            404,
-            505
-        ],
-        "rounds_per_seed": 300
-    },
-    "prime_and_probe": {
-        "unprotected": {
-            "mean": 100.0,
-            "std": 0.0,
-            "samples": [
-                100.0,
-                100.0,
-                100.0,
-                100.0,
-                100.0
-            ]
-        },
-        "partitioned": {
-            "mean": 6.27,
-            "std": 0.83,
-            "samples": [
-                6.0,
-                5.33,
-                5.67,
-                6.67,
-                7.67
-            ]
-        },
-        "treasure_cache_clean": {
-            "mean": 11.2,
-            "std": 0.72,
-            "samples": [
-                10.33,
-                11.67,
-                10.67,
-                12.33,
-                11.0
-            ]
-        },
-        "treasure_cache_thrashed": {
-            "mean": 6.27,
-            "std": 1.48,
-            "samples": [
-                4.0,
-                6.0,
-                5.67,
-                8.33,
-                7.33
-            ]
-        },
-        "ada_ehb_thrashed": {
-            "mean": 6.27,
-            "std": 1.48,
-            "samples": [
-                4.0,
-                6.0,
-                5.67,
-                8.33,
-                7.33
-            ]
-        }
-    },
-    "evict_and_time": {
-        "unprotected": {
-            "mean_gap": 197.8,
-            "std_gap": 0.24
-        },
-        "partitioned": {
-            "mean_gap": 0.99,
-            "std_gap": 0.01
-        },
-        "treasure_cache": {
-            "mean_gap": 1.17,
-            "std_gap": 0.02
-        },
-        "ada_ehb": {
-            "mean_gap": 1.17,
-            "std_gap": 0.02
-        }
-    },
-    "capacity_study": {
-        "capacities_lines": [
-            16,
-            32,
-            64,
-            128,
-            256
-        ],
-        "capacities_kb": [
-            1.0,
-            2.0,
-            4.0,
-            8.0,
-            16.0
-        ],
-        "tc_hit_ratios_mean": [
-            0.0,
-            0.0,
-            66.7,
-            100.0,
-            100.0
-        ],
-        "tc_hit_ratios_std": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
-        ],
-        "ada_hit_ratios_mean": [
-            62.5,
-            100.0,
-            100.0,
-            100.0,
-            100.0
-        ],
-        "ada_hit_ratios_std": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
+  "model_description": "Sequential synthetic cache-event simulator (educational model; not full-system gem5).",
+  "seeds": [
+    101,
+    202,
+    303,
+    404,
+    505
+  ],
+  "scope_and_limitations": "Demonstrates microarchitectural event flow, dual-condition placement, domain ownership isolation, and retention scoring under controlled workloads. Does not claim full-system gem5 cycle-accuracy or key recovery.",
+  "residency_isolated": {
+    "none_cap8_churn0": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
         ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.775,
+        "std_across_seeds": 1.291,
+        "per_seed": [
+          201.75,
+          201.875,
+          204.25,
+          201.875,
+          204.125
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap8_churn32": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.0,
+        "std_across_seeds": 1.035,
+        "per_seed": [
+          202.5,
+          200.375,
+          203.125,
+          201.75,
+          202.25
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap8_churn128": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.5,
+        "std_across_seeds": 1.205,
+        "per_seed": [
+          202.125,
+          199.5,
+          201.875,
+          201.375,
+          202.625
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap16_churn0": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.775,
+        "std_across_seeds": 1.291,
+        "per_seed": [
+          201.75,
+          201.875,
+          204.25,
+          201.875,
+          204.125
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap16_churn32": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.0,
+        "std_across_seeds": 1.035,
+        "per_seed": [
+          202.5,
+          200.375,
+          203.125,
+          201.75,
+          202.25
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap16_churn128": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.5,
+        "std_across_seeds": 1.205,
+        "per_seed": [
+          202.125,
+          199.5,
+          201.875,
+          201.375,
+          202.625
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap32_churn0": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.775,
+        "std_across_seeds": 1.291,
+        "per_seed": [
+          201.75,
+          201.875,
+          204.25,
+          201.875,
+          204.125
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap32_churn32": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.0,
+        "std_across_seeds": 1.035,
+        "per_seed": [
+          202.5,
+          200.375,
+          203.125,
+          201.75,
+          202.25
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap32_churn128": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.5,
+        "std_across_seeds": 1.205,
+        "per_seed": [
+          202.125,
+          199.5,
+          201.875,
+          201.375,
+          202.625
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap64_churn0": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.775,
+        "std_across_seeds": 1.291,
+        "per_seed": [
+          201.75,
+          201.875,
+          204.25,
+          201.875,
+          204.125
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap64_churn32": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.0,
+        "std_across_seeds": 1.035,
+        "per_seed": [
+          202.5,
+          200.375,
+          203.125,
+          201.75,
+          202.25
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "none_cap64_churn128": {
+      "buffered_before_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.5,
+        "std_across_seeds": 1.205,
+        "per_seed": [
+          202.125,
+          199.5,
+          201.875,
+          201.375,
+          202.625
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap8_churn0": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 121.175,
+        "std_across_seeds": 1.548,
+        "per_seed": [
+          121.375,
+          119.375,
+          121.375,
+          120.25,
+          123.5
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap8_churn32": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 120.6,
+        "std_across_seeds": 0.681,
+        "per_seed": [
+          120.625,
+          120.0,
+          121.0,
+          119.875,
+          121.5
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap8_churn128": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 120.8,
+        "std_across_seeds": 1.154,
+        "per_seed": [
+          121.375,
+          119.5,
+          121.125,
+          119.75,
+          122.25
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap16_churn0": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap16_churn32": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap16_churn128": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap32_churn0": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap32_churn32": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap32_churn128": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap64_churn0": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap64_churn32": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap64_churn128": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap8_churn0": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 121.175,
+        "std_across_seeds": 1.548,
+        "per_seed": [
+          121.375,
+          119.375,
+          121.375,
+          120.25,
+          123.5
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap8_churn32": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 120.6,
+        "std_across_seeds": 0.681,
+        "per_seed": [
+          120.625,
+          120.0,
+          121.0,
+          119.875,
+          121.5
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap8_churn128": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 120.8,
+        "std_across_seeds": 1.154,
+        "per_seed": [
+          121.375,
+          119.5,
+          121.125,
+          119.75,
+          122.25
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap16_churn0": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap16_churn32": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap16_churn128": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap32_churn0": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap32_churn32": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap32_churn128": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap64_churn0": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap64_churn32": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap64_churn128": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
     }
+  },
+  "residency_shared": {
+    "treasure_cache_cap8_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 2,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.875,
+        "std_across_seeds": 1.559,
+        "per_seed": [
+          199.75,
+          202.125,
+          201.75,
+          204.125,
+          201.625
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap8_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 2,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.25,
+        "std_across_seeds": 2.194,
+        "per_seed": [
+          199.875,
+          203.5,
+          203.625,
+          204.375,
+          199.875
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap16_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 3,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.9,
+        "std_across_seeds": 0.859,
+        "per_seed": [
+          200.875,
+          201.125,
+          202.625,
+          202.75,
+          202.125
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap16_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 3,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.65,
+        "std_across_seeds": 1.04,
+        "per_seed": [
+          200.375,
+          202.125,
+          203.0,
+          201.875,
+          200.875
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap32_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 6,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          6,
+          6,
+          6,
+          6,
+          6
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.75,
+        "std_across_seeds": 1.661,
+        "per_seed": [
+          199.625,
+          200.5,
+          202.5,
+          203.75,
+          202.375
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap32_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 6,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          6,
+          6,
+          6,
+          6,
+          6
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 202.0,
+        "std_across_seeds": 1.035,
+        "per_seed": [
+          203.25,
+          200.5,
+          201.875,
+          202.625,
+          201.75
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap64_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.125,
+        "std_across_seeds": 0.451,
+        "per_seed": [
+          201.0,
+          200.5,
+          201.5,
+          201.625,
+          201.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "treasure_cache_cap64_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ehb_hits": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "dram_misses": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 201.0,
+        "std_across_seeds": 1.038,
+        "per_seed": [
+          201.625,
+          201.0,
+          200.125,
+          199.875,
+          202.375
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap8_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 121.3,
+        "std_across_seeds": 0.699,
+        "per_seed": [
+          121.25,
+          122.0,
+          120.25,
+          121.125,
+          121.875
+        ]
+      },
+      "bypasses": {
+        "mean": 94,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          94,
+          94,
+          94,
+          94,
+          94
+        ]
+      }
+    },
+    "ada_ehb_cap8_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "ehb_hits": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "dram_misses": {
+        "mean": 4,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 121.4,
+        "std_across_seeds": 0.582,
+        "per_seed": [
+          121.0,
+          121.375,
+          122.25,
+          121.625,
+          120.75
+        ]
+      },
+      "bypasses": {
+        "mean": 254,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          254,
+          254,
+          254,
+          254,
+          254
+        ]
+      }
+    },
+    "ada_ehb_cap16_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 82,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          82,
+          82,
+          82,
+          82,
+          82
+        ]
+      }
+    },
+    "ada_ehb_cap16_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 242,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          242,
+          242,
+          242,
+          242,
+          242
+        ]
+      }
+    },
+    "ada_ehb_cap32_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap32_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "ada_ehb_cap64_sharedchurn16": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 14,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          14,
+          14,
+          14,
+          14,
+          14
+        ]
+      }
+    },
+    "ada_ehb_cap64_sharedchurn48": {
+      "buffered_before_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "buffered_after_churn": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "ehb_hits": {
+        "mean": 8,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "dram_misses": {
+        "mean": 0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mean_victim_latency": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "bypasses": {
+        "mean": 15.2,
+        "std_across_seeds": 0.447,
+        "per_seed": [
+          16,
+          15,
+          15,
+          15,
+          15
+        ]
+      }
+    }
+  },
+  "timing_evict_and_time": {
+    "none_churn0": {
+      "timing_gap": {
+        "mean": 164.45,
+        "std_across_seeds": 0.228,
+        "per_seed": [
+          164.35,
+          164.45,
+          164.175,
+          164.475,
+          164.8
+        ]
+      },
+      "mean_evicted": {
+        "mean": 202.45,
+        "std_across_seeds": 0.228,
+        "per_seed": [
+          202.35,
+          202.45,
+          202.175,
+          202.475,
+          202.8
+        ]
+      },
+      "mean_cached": {
+        "mean": 38.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          38.0,
+          38.0,
+          38.0,
+          38.0,
+          38.0
+        ]
+      },
+      "ehb_hit_fraction": {
+        "mean": 0.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "levels_seed_101": {
+        "DRAM_MISS": 40
+      }
+    },
+    "none_churn64": {
+      "timing_gap": {
+        "mean": 164.42,
+        "std_across_seeds": 0.434,
+        "per_seed": [
+          164.6,
+          164.9,
+          164.025,
+          163.9,
+          164.675
+        ]
+      },
+      "mean_evicted": {
+        "mean": 202.42,
+        "std_across_seeds": 0.434,
+        "per_seed": [
+          202.6,
+          202.9,
+          202.025,
+          201.9,
+          202.675
+        ]
+      },
+      "mean_cached": {
+        "mean": 38.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          38.0,
+          38.0,
+          38.0,
+          38.0,
+          38.0
+        ]
+      },
+      "ehb_hit_fraction": {
+        "mean": 0.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "levels_seed_101": {
+        "DRAM_MISS": 40
+      }
+    },
+    "treasure_cache_churn0": {
+      "timing_gap": {
+        "mean": 2.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ]
+      },
+      "mean_evicted": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "mean_cached": {
+        "mean": 38.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          38.0,
+          38.0,
+          38.0,
+          38.0,
+          38.0
+        ]
+      },
+      "ehb_hit_fraction": {
+        "mean": 1.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "levels_seed_101": {
+        "EHB_HIT": 40
+      }
+    },
+    "treasure_cache_churn64": {
+      "timing_gap": {
+        "mean": 2.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ]
+      },
+      "mean_evicted": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "mean_cached": {
+        "mean": 38.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          38.0,
+          38.0,
+          38.0,
+          38.0,
+          38.0
+        ]
+      },
+      "ehb_hit_fraction": {
+        "mean": 1.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "levels_seed_101": {
+        "EHB_HIT": 40
+      }
+    },
+    "ada_ehb_churn0": {
+      "timing_gap": {
+        "mean": 2.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ]
+      },
+      "mean_evicted": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "mean_cached": {
+        "mean": 38.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          38.0,
+          38.0,
+          38.0,
+          38.0,
+          38.0
+        ]
+      },
+      "ehb_hit_fraction": {
+        "mean": 1.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "levels_seed_101": {
+        "EHB_HIT": 40
+      }
+    },
+    "ada_ehb_churn64": {
+      "timing_gap": {
+        "mean": 2.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ]
+      },
+      "mean_evicted": {
+        "mean": 40.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          40.0,
+          40.0,
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "mean_cached": {
+        "mean": 38.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          38.0,
+          38.0,
+          38.0,
+          38.0,
+          38.0
+        ]
+      },
+      "ehb_hit_fraction": {
+        "mean": 1.0,
+        "std_across_seeds": 0.0,
+        "per_seed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "levels_seed_101": {
+        "EHB_HIT": 40
+      }
+    }
+  }
 }

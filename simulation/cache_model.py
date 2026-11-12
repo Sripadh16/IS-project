@@ -1,204 +1,134 @@
 """
-cache_model.py - Hardware Cache Hierarchy, Baseline Defenses, TreasureCache & Ada-EHB
+cache_model.py - Hardware Cache Hierarchy, TreasureCache & Ada-EHB Simulation Model
+
+Sequential synthetic cache-event simulator (educational model; not full-system gem5).
 Models:
-  - Multi-level inclusive cache hierarchy (Private L1/L2, Shared Inclusive LLC, DRAM)
-  - Coherence back-invalidation on inclusive LLC evictions
-  - Standard Unprotected LRU Cache
-  - Static Way-Partitioning (Intel CAT style)
-  - TreasureCache EHB with Domain Ownership Quotas & Constant-Time Flush (CT-Flush)
-  - Proposed Ada-EHB: Adaptive Frequency-Aware EHB with Retention Scoring & Burst Rate Limiting
+  - 64-byte lines, multi-level inclusive cache hierarchy (private L1/L2 per core, shared inclusive LLC).
+  - Explicit per-core private-cache sharer tracking (sharers: set of core IDs).
+  - Explicit per-domain ownership tracking (owners: set of domain IDs) representing physical page ownership.
+  - Dual-condition secure placement policy (Condition 1: private sharers; Condition 2: EHB-reload replacement).
+  - Domain-isolated ownership replacement policy (eligibility strictly enforces subset ownership).
+  - EHB reload mechanism: hits in EHB are removed from EHB and installed into LLC (marked from_ehb=True).
+  - Coherence back-invalidation: LLC evictions back-invalidate private L1/L2 caches.
+  - Constant-Time Flush (CT-Flush): constant 70-cycle execution on cached and uncached lines.
+  - Proposed Ada-EHB: Dynamic retention scoring, 4-bit frequency counters, sticky residency for sensitive entries,
+    and token-bucket burst rate-limiting.
 """
 
 import math
 import random
-from typing import Dict, List, Optional, Tuple, Set
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Set, Tuple
+
+LINE_SIZE = 64
 
 
-class CacheBlock:
-    """Represents a single cache block in L1, L2, or LLC."""
-    def __init__(self, tag: int = 0, valid: bool = False, dirty: bool = False, domain_id: int = 0, is_sensitive: bool = False):
-        self.tag: int = tag
-        self.valid: bool = valid
-        self.dirty: bool = dirty
-        self.domain_id: int = domain_id  # 0: victim, 1: attacker
-        self.is_sensitive: bool = is_sensitive
-        self.last_access_time: int = 0
-        self.access_count: int = 0
-        self.in_private_cache: bool = False
-
-
-class SetAssociativeCache:
-    """Configurable Set-Associative Cache."""
-    def __init__(self, name: str, size_bytes: int, ways: int, line_size: int = 64, hit_latency: int = 4):
-        self.name = name
-        self.size_bytes = size_bytes
-        self.ways = ways
-        self.line_size = line_size
-        self.hit_latency = hit_latency
-        
-        self.num_lines = size_bytes // line_size
-        self.num_sets = self.num_lines // ways
-        self.offset_bits = int(math.log2(line_size))
-        self.set_bits = int(math.log2(self.num_sets))
-        self.set_mask = self.num_sets - 1
-        
-        self.sets: List[List[CacheBlock]] = [
-            [CacheBlock() for _ in range(ways)] for _ in range(self.num_sets)
-        ]
-        
-        self.hits = 0
-        self.misses = 0
-        self.evictions = 0
-
-    def parse_address(self, addr: int) -> Tuple[int, int, int]:
-        offset = addr & ((1 << self.offset_bits) - 1)
-        set_idx = (addr >> self.offset_bits) & self.set_mask
-        tag = addr >> (self.offset_bits + self.set_bits)
-        return tag, set_idx, offset
-
-    def probe(self, addr: int) -> Tuple[bool, int]:
-        tag, set_idx, _ = self.parse_address(addr)
-        lines = self.sets[set_idx]
-        for idx, line in enumerate(lines):
-            if line.valid and line.tag == tag:
-                return True, idx
-        return False, -1
-
-    def access(self, addr: int, domain_id: int, current_time: int, way_mask: Optional[Tuple[int, int]] = None, is_sensitive: bool = False) -> Tuple[bool, Optional[CacheBlock], int]:
-        tag, set_idx, _ = self.parse_address(addr)
-        lines = self.sets[set_idx]
-        start_way, end_way = (0, self.ways) if way_mask is None else way_mask
-        
-        # Check Hit in allocated ways
-        for idx in range(start_way, end_way):
-            line = lines[idx]
-            if line.valid and line.tag == tag:
-                self.hits += 1
-                line.last_access_time = current_time
-                line.access_count += 1
-                if is_sensitive:
-                    line.is_sensitive = True
-                return True, None, set_idx
-        
-        # Miss: Find invalid block or LRU victim
-        self.misses += 1
-        invalid_idx = -1
-        lru_idx = start_way
-        min_time = float('inf')
-        
-        for idx in range(start_way, end_way):
-            line = lines[idx]
-            if not line.valid:
-                invalid_idx = idx
-                break
-            if line.last_access_time < min_time:
-                min_time = line.last_access_time
-                lru_idx = idx
-        
-        evicted = None
-        target_idx = invalid_idx if invalid_idx != -1 else lru_idx
-        target_line = lines[target_idx]
-        
-        if target_line.valid:
-            self.evictions += 1
-            evicted = CacheBlock(target_line.tag, target_line.valid, target_line.dirty, target_line.domain_id, target_line.is_sensitive)
-            evicted.in_private_cache = target_line.in_private_cache
-        
-        target_line.tag = tag
-        target_line.valid = True
-        target_line.dirty = False
-        target_line.domain_id = domain_id
-        target_line.is_sensitive = is_sensitive
-        target_line.last_access_time = current_time
-        target_line.access_count = 1
-        target_line.in_private_cache = False
-        
-        return False, evicted, set_idx
-
-    def invalidate(self, addr: int) -> bool:
-        tag, set_idx, _ = self.parse_address(addr)
-        for line in self.sets[set_idx]:
-            if line.valid and line.tag == tag:
-                line.valid = False
-                return True
-        return False
-
-
+@dataclass
 class BufferEntry:
-    """Represents an entry inside the Eviction-Hidden Buffer (EHB)."""
-    def __init__(self, block_addr: int, block: CacheBlock, current_time: int, is_sensitive: bool = False):
-        self.block_addr = block_addr
-        self.block = block
-        self.domain_id = block.domain_id
-        self.insertion_time = current_time
-        self.last_access_time = current_time
-        self.freq_counter = 1            # 4-bit saturating counter (0-15)
-        self.is_sensitive = is_sensitive or block.is_sensitive
-        self.sensitivity_score = 3.0 if self.is_sensitive else 1.0
+    """Represents an entry stored inside the Eviction-Hidden Buffer (EHB)."""
+    address: int
+    owners: Set[int]
+    sensitive: bool
+    insertion_time: int
+    last_access: int
+    frequency: int = 1
 
 
 class EvictionHiddenBuffer:
     """
     Standard TreasureCache Eviction-Hidden Buffer (EHB).
-    - Fully-associative buffer.
-    - Parameterized capacity (default 64 lines = 4 KB for 2-core model).
-    - Domain ownership quota: Each domain can own up to capacity // num_domains slots.
-    - Secure Replacement: Evicts oldest entry belonging to allocating domain, or LRU unowned.
+    - Fully-associative buffer of parameterized capacity.
+    - Domain ownership quota: conservative cap (capacity // num_domains) per domain.
+    - Eligibility Rule: An incoming block can ONLY replace an entry whose owners
+      are a subset of the incoming block's owners. This strictly prevents cross-domain eviction.
+    - Reload Behavior: Hits in the EHB take the entry out of the buffer so it can be re-installed into LLC.
     """
     def __init__(self, capacity_lines: int = 64, hit_latency: int = 40, num_domains: int = 2):
         self.capacity = capacity_lines
         self.hit_latency = hit_latency
         self.num_domains = num_domains
-        self.domain_quota = max(1, capacity_lines // num_domains)
+        self.quota = max(1, capacity_lines // num_domains)
         self.entries: Dict[int, BufferEntry] = {}
         
+        # Operational counters
         self.hits = 0
         self.misses = 0
         self.evictions = 0
+        self.bypasses = 0
 
     def contains(self, block_addr: int) -> bool:
         return block_addr in self.entries
 
-    def access(self, block_addr: int, current_time: int) -> bool:
-        if block_addr in self.entries:
+    def take(self, block_addr: int, current_time: int) -> Optional[BufferEntry]:
+        """
+        Retrieves and removes an entry on hit, modeling EHB-to-LLC reload.
+        """
+        entry = self.entries.pop(block_addr, None)
+        if entry is None:
+            self.misses += 1
+        else:
             self.hits += 1
-            entry = self.entries[block_addr]
-            entry.last_access_time = current_time
-            if entry.freq_counter < 15:
-                entry.freq_counter += 1
-            return True
-        self.misses += 1
-        return False
+            entry.last_access = current_time
+            if entry.frequency < 15:
+                entry.frequency += 1
+        return entry
 
-    def insert(self, block_addr: int, block: CacheBlock, current_time: int, is_sensitive: bool = False) -> Optional[int]:
+    def _eligible(self, incoming_owners: Set[int]) -> List[Tuple[int, BufferEntry]]:
+        """
+        Conservative replacement eligibility rule:
+        An insertion may replace ONLY an entry whose owners are a subset of the incoming
+        block's owners (e.owners.issubset(incoming_owners)).
+        This prevents an attacker-owned block (e.g. {1}) from ever evicting a victim-owned
+        block (e.g. {0}).
+        """
+        return [(a, e) for a, e in self.entries.items() if e.owners.issubset(incoming_owners)]
+
+    def insert(self, block_addr: int, owners: Set[int], sensitive: bool, current_time: int) -> bool:
+        owners = set(owners)
+        if not owners or self.capacity == 0:
+            self.bypasses += 1
+            return False
+
+        # If already resident, update ownership and sensitivity flags
         if block_addr in self.entries:
-            self.entries[block_addr].last_access_time = current_time
-            return None
+            e = self.entries[block_addr]
+            e.owners |= owners
+            e.sensitive |= sensitive
+            e.last_access = current_time
+            if e.frequency < 15:
+                e.frequency += 1
+            return True
 
-        evicted_addr = None
-        domain_id = block.domain_id
+        # Check quota limits: shared entries count against all their owners
+        for d in owners:
+            domain_count = sum(d in e.owners for e in self.entries.values())
+            if domain_count >= self.quota:
+                eligible = [(a, e) for a, e in self._eligible(owners) if d in e.owners]
+                if not eligible:
+                    self.bypasses += 1
+                    return False
+                break
+        else:
+            eligible = self._eligible(owners) if len(self.entries) >= self.capacity else []
 
-        if len(self.entries) >= self.capacity:
-            # Standard TreasureCache Ownership Replacement Policy:
-            # When capacity is exceeded, evict the LRU block among eligible entries
-            domain_entries = [k for k, v in self.entries.items() if v.domain_id == domain_id]
-            if len(domain_entries) >= self.domain_quota:
-                evict_candidate = min(domain_entries, key=lambda k: self.entries[k].last_access_time)
-            else:
-                evict_candidate = min(self.entries.keys(), key=lambda k: self.entries[k].last_access_time)
-            
-            del self.entries[evict_candidate]
+        if eligible:
+            # Standard TreasureCache policy: replace the LRU among eligible entries
+            evict_key = min(eligible, key=lambda item: item[1].last_access)[0]
+            del self.entries[evict_key]
             self.evictions += 1
-            evicted_addr = evict_candidate
+        elif len(self.entries) >= self.capacity:
+            self.bypasses += 1
+            return False
 
-        self.entries[block_addr] = BufferEntry(block_addr, block, current_time, is_sensitive)
-        return evicted_addr
-
-    def remove(self, block_addr: int) -> bool:
-        if block_addr in self.entries:
-            del self.entries[block_addr]
-            return True
-        return False
+        self.entries[block_addr] = BufferEntry(
+            address=block_addr,
+            owners=owners,
+            sensitive=sensitive,
+            insertion_time=current_time,
+            last_access=current_time,
+            frequency=1
+        )
+        return True
 
 
 class AdaptiveEvictionHiddenBuffer(EvictionHiddenBuffer):
@@ -209,212 +139,281 @@ class AdaptiveEvictionHiddenBuffer(EvictionHiddenBuffer):
       1. Retention Score:
          R(k) = [ S(k) * (1 + alpha * F(k)) ] / ln(1 + Age(k) + epsilon)
          where:
-           - S(k): Sensitivity weight (3.0 for sensitive/cross-domain blocks, 1.0 for normal)
-           - F(k): 4-bit saturating frequency counter (0 <= F(k) <= 15)
-           - alpha: Frequency importance weight (0.2)
-           - Age(k): current_time - last_access_time (in cycles)
-           - epsilon: 1e-5 (prevents division by zero)
+           - S(k): Sensitivity weight (3.0 for sensitive lines, 1.0 for normal).
+           - F(k): 4-bit saturating frequency counter (0 <= F(k) <= 15).
+           - alpha: Frequency importance weight (0.2).
+           - Age(k): current_time - last_access (in clock cycles).
+           - epsilon: 1e-5 (prevents division by zero).
       
-      2. Replacement Rule:
-         When buffer is full, evict the entry with the lowest Retention Score:
-         k_evict = argmin_{k in Entries} R(k).
-         If all resident blocks have higher retention than the incoming block, the incoming block
-         bypasses the buffer to DRAM, preventing attacker thrashing from poisoning the buffer.
+      2. Domain-Isolated Replacement with Protected Sensitive Entries:
+         - Candidate replacement entries must strictly belong to the incoming block's domain subset (_eligible).
+         - Non-sensitive entries are preferred for eviction.
+         - Sensitive entries are protected while eligible non-sensitive entries exist.
+         - If all eligible entries are sensitive, non-sensitive incoming blocks bypass directly to DRAM.
       
-      3. Burst Rate Limiting:
-         Token-bucket rate limiter per domain. Maximum burst allocations M = 8 per window W = 1000 cycles.
-         High-rate streaming evictions exceeding M are bypassed directly to DRAM.
+      3. Token-Bucket Burst Rate-Limiting:
+         - Per-domain token bucket: capacity M = 8 tokens, refill rate = 1 token per 125 cycles.
+         - Non-sensitive burst evictions exceeding available tokens bypass directly to DRAM.
     """
     def __init__(self, capacity_lines: int = 64, hit_latency: int = 40, num_domains: int = 2):
         super().__init__(capacity_lines, hit_latency, num_domains)
         self.alpha = 0.2
         self.epsilon = 1e-5
-        
-        self.burst_tokens = {d: 8.0 for d in range(num_domains)}
-        self.last_token_update = {d: 0 for d in range(num_domains)}
+        self.tokens: Dict[int, float] = {d: 8.0 for d in range(num_domains)}
+        self.updated: Dict[int, int] = {d: 0 for d in range(num_domains)}
         self.max_tokens = 8.0
-        self.refill_rate = 1.0 / 125.0
+        self.refill_rate = 1.0 / 125.0  # 8 tokens per 1000 cycles
 
-    def _update_tokens(self, domain_id: int, current_time: int):
-        elapsed = max(0, current_time - self.last_token_update[domain_id])
-        self.burst_tokens[domain_id] = min(
-            self.max_tokens,
-            self.burst_tokens[domain_id] + elapsed * self.refill_rate
-        )
-        self.last_token_update[domain_id] = current_time
+    def score(self, entry: BufferEntry, current_time: int) -> float:
+        age = max(1, current_time - entry.last_access)
+        s_weight = 3.0 if entry.sensitive else 1.0
+        return (s_weight * (1.0 + self.alpha * entry.frequency)) / math.log(1.0 + age + self.epsilon)
 
-    def compute_retention_score(self, entry: BufferEntry, current_time: int) -> float:
-        age = max(1, current_time - entry.last_access_time)
-        numerator = entry.sensitivity_score * (1.0 + self.alpha * entry.freq_counter)
-        denominator = math.log(1.0 + age + self.epsilon)
-        return numerator / denominator
+    def insert(self, block_addr: int, owners: Set[int], sensitive: bool, current_time: int) -> bool:
+        owners = set(owners)
+        if not owners or self.capacity == 0:
+            self.bypasses += 1
+            return False
 
-    def insert(self, block_addr: int, block: CacheBlock, current_time: int, is_sensitive: bool = False) -> Optional[int]:
         if block_addr in self.entries:
-            entry = self.entries[block_addr]
-            entry.last_access_time = current_time
-            if entry.freq_counter < 15:
-                entry.freq_counter += 1
-            return None
+            e = self.entries[block_addr]
+            e.owners |= owners
+            e.sensitive |= sensitive
+            e.last_access = current_time
+            if e.frequency < 15:
+                e.frequency += 1
+            return True
 
-        effective_sensitive = is_sensitive or block.is_sensitive
-        domain_id = block.domain_id
-        self._update_tokens(domain_id, current_time)
+        # Token-bucket rate-limiting for non-sensitive burst traffic
+        if not sensitive:
+            for d in owners:
+                elapsed = max(0, current_time - self.updated[d])
+                self.tokens[d] = min(self.max_tokens, self.tokens[d] + elapsed * self.refill_rate)
+                self.updated[d] = current_time
+                if self.tokens[d] < 1.0:
+                    self.bypasses += 1
+                    return False
 
-        # Mechanism 3: Burst Rate Limiting
-        # Non-sensitive burst evictions from high-churn domains are rate-limited
-        if not effective_sensitive and self.burst_tokens[domain_id] < 1.0:
-            # Bypass buffer directly to DRAM
-            return None
+        must_replace = (len(self.entries) >= self.capacity or any(
+            sum(d in e.owners for e in self.entries.values()) >= self.quota for d in owners
+        ))
 
-        if not effective_sensitive:
-            self.burst_tokens[domain_id] -= 1.0
+        if must_replace:
+            eligible = self._eligible(owners)
+            # Prefer non-sensitive entries for replacement
+            nonsensitive = [(a, e) for a, e in eligible if not e.sensitive]
+            if nonsensitive:
+                eligible = nonsensitive
+            elif not sensitive:
+                # If all eligible resident entries are sensitive and incoming is non-sensitive:
+                # Sticky residency protects existing sensitive entries -> bypass to DRAM!
+                self.bypasses += 1
+                return False
 
-        new_entry = BufferEntry(block_addr, block, current_time, effective_sensitive)
-        new_score = self.compute_retention_score(new_entry, current_time)
+            if not eligible:
+                self.bypasses += 1
+                return False
 
-        evicted_addr = None
-        if len(self.entries) >= self.capacity:
-            # Mechanism 2: Retention-Based Replacement
-            min_score = float('inf')
-            min_key = None
-            
-            for k, entry in self.entries.items():
-                score = self.compute_retention_score(entry, current_time)
-                if score < min_score:
-                    min_score = score
-                    min_key = k
+            # Select candidate with lowest retention score (tie-break on older last_access)
+            key, old_entry = min(eligible, key=lambda x: (self.score(x[1], current_time), x[1].last_access))
+            incoming_entry = BufferEntry(block_addr, owners, sensitive, current_time, current_time)
 
-            # Sticky Residency & Bypass Decision:
-            # If the candidate to insert has lower retention than all resident blocks,
-            # bypass to DRAM rather than displacing a more critical resident line.
-            if new_score <= min_score and not effective_sensitive:
-                return None
+            if not sensitive and self.score(incoming_entry, current_time) <= self.score(old_entry, current_time):
+                self.bypasses += 1
+                return False
 
-            # Evict lowest retention entry
-            del self.entries[min_key]
+            del self.entries[key]
             self.evictions += 1
-            evicted_addr = min_key
 
-        self.entries[block_addr] = new_entry
-        return evicted_addr
+        self.entries[block_addr] = BufferEntry(
+            address=block_addr,
+            owners=owners,
+            sensitive=sensitive,
+            insertion_time=current_time,
+            last_access=current_time,
+            frequency=1
+        )
+
+        if not sensitive:
+            for d in owners:
+                self.tokens[d] -= 1.0
+
+        return True
 
 
 class MultiCoreCacheSystem:
-    def __init__(self, mode: str = 'none', ehb_capacity: int = 64):
+    """
+    Simulates a 2-core processor with inclusive multi-level caching:
+      - Private L1 per core (512 lines = 32 KB, LRU, 4 cycles)
+      - Private L2 per core (4096 lines = 256 KB, LRU, 12 cycles)
+      - Shared Inclusive LLC (parameterized sets and ways, default 2048 sets x 16 ways = 2 MB, 38 cycles)
+      - Memory DRAM (~200 cycles)
+    Defense modes supported:
+      - 'none': Standard inclusive cache without side-channel defense
+      - 'partitioned': Static way-partitioning (disjoint ways per domain)
+      - 'treasure_cache': TreasureCache EHB with domain ownership quotas & CT-Flush
+      - 'ada_ehb': Proposed Ada-EHB with retention scoring, sticky residency, & rate-limiting
+    """
+    def __init__(self, mode: str = 'none', ehb_capacity: int = 64, seed: int = 42, llc_sets: int = 2048, llc_ways: int = 16):
         self.mode = mode
-        self.current_time = 0
+        self.time = 0
+        self.rng = random.Random(seed)
         
-        # Latency constants (CPU cycles)
+        # Latency constants
         self.LATENCY_L1 = 4
         self.LATENCY_L2 = 12
         self.LATENCY_LLC = 38
         self.LATENCY_EHB = 40
         self.LATENCY_DRAM = 200
+        self.LATENCY_CT_FLUSH = 70
         
-        self.l1_cores = [
-            SetAssociativeCache("L1_Core0", size_bytes=32 * 1024, ways=8, hit_latency=self.LATENCY_L1),
-            SetAssociativeCache("L1_Core1", size_bytes=32 * 1024, ways=8, hit_latency=self.LATENCY_L1)
-        ]
+        # Private caches per core: bounded dictionaries with LRU semantics
+        self.l1: List[Dict[int, int]] = [{}, {}]
+        self.l2: List[Dict[int, int]] = [{}, {}]
+        self.l1_limit = 512    # 32 KB
+        self.l2_limit = 4096   # 256 KB
         
-        self.l2_cores = [
-            SetAssociativeCache("L2_Core0", size_bytes=256 * 1024, ways=8, hit_latency=self.LATENCY_L2),
-            SetAssociativeCache("L2_Core1", size_bytes=256 * 1024, ways=8, hit_latency=self.LATENCY_L2)
-        ]
+        # Shared LLC sets
+        self.llc_sets = llc_sets
+        self.llc_ways = llc_ways
+        self.llc: List[Dict[int, int]] = [{} for _ in range(llc_sets)]
         
-        self.llc = SetAssociativeCache("LLC_Shared", size_bytes=2 * 1024 * 1024, ways=16, hit_latency=self.LATENCY_LLC)
+        # Global coherence and ownership metadata
+        self.sharers: Dict[int, Set[int]] = {}  # block -> set(core_id)
+        self.owners: Dict[int, Set[int]] = {}   # block -> set(domain_id)
+        self.sensitive: Set[int] = set()        # sensitive block addresses
         
-        self.partition_masks = {
-            0: (0, 8),
-            1: (8, 16)
-        }
-        
+        # EHB instances
         if mode == 'treasure_cache':
-            self.ehb = EvictionHiddenBuffer(capacity_lines=ehb_capacity, hit_latency=self.LATENCY_EHB, num_domains=2)
+            self.ehb: Optional[EvictionHiddenBuffer] = EvictionHiddenBuffer(ehb_capacity, hit_latency=self.LATENCY_EHB)
         elif mode == 'ada_ehb':
-            self.ehb = AdaptiveEvictionHiddenBuffer(capacity_lines=ehb_capacity, hit_latency=self.LATENCY_EHB, num_domains=2)
+            self.ehb: Optional[EvictionHiddenBuffer] = AdaptiveEvictionHiddenBuffer(ehb_capacity, hit_latency=self.LATENCY_EHB)
         else:
             self.ehb = None
+            
+        self.stats = {
+            'llc_evictions': 0,
+            'back_invalidations': 0,
+            'ehb_eligible': 0,
+            'ehb_inserted': 0
+        }
 
-    def tick(self, cycles: int = 1):
-        self.current_time += cycles
+    def _set(self, block: int) -> int:
+        return block % self.llc_sets
+
+    def _private_add(self, core: int, block: int):
+        """Adds block to private L1 and L2 caches, updating sharer sets on eviction."""
+        for cache, limit in ((self.l1[core], self.l1_limit), (self.l2[core], self.l2_limit)):
+            cache.pop(block, None)
+            cache[block] = self.time
+            if len(cache) > limit:
+                oldest = next(iter(cache))
+                del cache[oldest]
+                if oldest not in self.l1[core] and oldest not in self.l2[core]:
+                    self.sharers.get(oldest, set()).discard(core)
+        self.sharers.setdefault(block, set()).add(core)
+
+    def _invalidate_private(self, block: int) -> bool:
+        """Back-invalidates a block from all private L1/L2 caches. Returns whether block had sharers."""
+        had = bool(self.sharers.get(block))
+        for c in range(2):
+            self.l1[c].pop(block, None)
+            self.l2[c].pop(block, None)
+        self.sharers.pop(block, None)
+        if had:
+            self.stats['back_invalidations'] += 1
+        return had
+
+    def _install_llc(self, block: int, domain: int, from_ehb: bool = False):
+        """Installs block into shared LLC, triggering eviction if set is full."""
+        idx = self._set(block)
+        group = self.llc[idx]
+        group.pop(block, None)
+
+        if self.mode == 'partitioned':
+            # Partitioning: disjoint ways per domain
+            owned = [b for b in group if domain in self.owners.get(b, set())]
+            if len(owned) >= self.llc_ways // 2:
+                oldest_owned = min(owned, key=lambda b: group[b])
+                self._evict_llc(oldest_owned, idx, from_ehb)
+        elif len(group) >= self.llc_ways:
+            oldest = min(group, key=lambda b: group[b])
+            self._evict_llc(oldest, idx, from_ehb)
+
+        group[block] = self.time
+
+    def _evict_llc(self, victim_block: int, idx: int, from_ehb: bool):
+        """Evicts a block from LLC and enforces dual-condition EHB placement."""
+        self.llc[idx].pop(victim_block, None)
+        self.stats['llc_evictions'] += 1
+        had_sharers = self._invalidate_private(victim_block)
+
+        # Dual-Condition Secure Placement:
+        # 1. Block had active private-cache sharers (inclusiveness violation risk).
+        # 2. OR eviction was caused by an EHB reload replacement.
+        if self.ehb and (had_sharers or from_ehb):
+            self.stats['ehb_eligible'] += 1
+            owners = self.owners.get(victim_block, set())
+            is_sens = victim_block in self.sensitive
+            if self.ehb.insert(victim_block, owners, is_sens, self.time):
+                self.stats['ehb_inserted'] += 1
 
     def read_address(self, core_id: int, addr: int, domain_id: int, is_sensitive: bool = False) -> Tuple[int, str]:
-        block_addr = addr >> 6
-        
-        # 1. Private L1
-        l1 = self.l1_cores[core_id]
-        l1_hit, _, _ = l1.access(addr, domain_id, self.current_time, is_sensitive=is_sensitive)
-        if l1_hit:
-            self.tick(self.LATENCY_L1)
-            return self.LATENCY_L1, "L1_HIT"
-        
-        # 2. Private L2
-        l2 = self.l2_cores[core_id]
-        l2_hit, _, _ = l2.access(addr, domain_id, self.current_time, is_sensitive=is_sensitive)
-        if l2_hit:
-            self.tick(self.LATENCY_L2)
-            return self.LATENCY_L2, "L2_HIT"
-        
-        # 3. Check EHB
-        if self.ehb and self.ehb.contains(block_addr):
-            self.ehb.access(block_addr, self.current_time)
-            latency = self.LATENCY_EHB + random.choice([0, 1, 2])
-            self.tick(latency)
-            # Bring block into L1/L2 on hit
-            l1.access(addr, domain_id, self.current_time, is_sensitive=is_sensitive)
-            l2.access(addr, domain_id, self.current_time, is_sensitive=is_sensitive)
-            return latency, "EHB_HIT"
-        
-        # 4. Check Shared LLC
-        way_mask = self.partition_masks[domain_id] if self.mode == 'partitioned' else None
-        llc_hit, evicted_block, set_idx = self.llc.access(addr, domain_id, self.current_time, way_mask=way_mask, is_sensitive=is_sensitive)
-        
-        # Handle LLC eviction: inclusive back-invalidation & EHB secure placement
-        if evicted_block is not None:
-            evicted_addr = (evicted_block.tag << (self.llc.set_bits + self.llc.offset_bits)) | (set_idx << self.llc.offset_bits)
-            
-            # Inclusive back-invalidation to L1 & L2
-            for c_idx in range(2):
-                self.l1_cores[c_idx].invalidate(evicted_addr)
-                self.l2_cores[c_idx].invalidate(evicted_addr)
-            
-            # Secure Placement Policy (TreasureCache Condition 1 & 2):
-            if self.ehb is not None:
-                if evicted_block.domain_id == 0 or evicted_block.is_sensitive:
-                    cloned_block = CacheBlock(evicted_block.tag, True, False, evicted_block.domain_id, evicted_block.is_sensitive)
-                    self.ehb.insert(evicted_addr >> 6, cloned_block, self.current_time, is_sensitive=evicted_block.is_sensitive)
+        """
+        Executes a memory read across the cache hierarchy.
+        Returns: (latency_in_cycles, hit_level_string)
+        """
+        block = addr // LINE_SIZE
+        self.owners.setdefault(block, set()).add(domain_id)
+        if is_sensitive:
+            self.sensitive.add(block)
 
-        if llc_hit:
-            if self.ehb and self.ehb.contains(block_addr):
-                self.ehb.remove(block_addr)
-            self.tick(self.LATENCY_LLC)
-            return self.LATENCY_LLC, "LLC_HIT"
-        
-        # 5. Miss -> DRAM access
-        if self.ehb and self.ehb.contains(block_addr):
-            self.ehb.remove(block_addr)
-            
-        latency = self.LATENCY_DRAM + random.randint(-4, 8)
-        self.tick(latency)
-        return latency, "DRAM_MISS"
+        # 1. Private L1 Hit
+        if block in self.l1[core_id]:
+            self._private_add(core_id, block)
+            self.time += self.LATENCY_L1
+            return self.LATENCY_L1, 'L1_HIT'
+
+        # 2. Private L2 Hit
+        if block in self.l2[core_id]:
+            self._private_add(core_id, block)
+            self.time += self.LATENCY_L2
+            return self.LATENCY_L2, 'L2_HIT'
+
+        idx = self._set(block)
+        # 3. Shared LLC Hit
+        if block in self.llc[idx]:
+            self.llc[idx][block] = self.time
+            self._private_add(core_id, block)
+            self.time += self.LATENCY_LLC
+            return self.LATENCY_LLC, 'LLC_HIT'
+
+        # 4. EHB Hit (Reload into LLC)
+        entry = self.ehb.take(block, self.time) if self.ehb else None
+        if entry:
+            self._install_llc(block, domain_id, from_ehb=True)
+            self._private_add(core_id, block)
+            self.time += self.LATENCY_EHB
+            return self.LATENCY_EHB, 'EHB_HIT'
+
+        # 5. DRAM Access (Miss across entire hierarchy)
+        self._install_llc(block, domain_id, from_ehb=False)
+        self._private_add(core_id, block)
+        latency = self.LATENCY_DRAM + self.rng.randint(-4, 8)
+        self.time += latency
+        return latency, 'DRAM_MISS'
 
     def clflush(self, core_id: int, addr: int) -> int:
-        block_addr = addr >> 6
-        was_cached = False
-        
-        for c in range(2):
-            if self.l1_cores[c].invalidate(addr) or self.l2_cores[c].invalidate(addr):
-                was_cached = True
-        if self.llc.invalidate(addr):
-            was_cached = True
-        if self.ehb and self.ehb.remove(block_addr):
-            was_cached = True
+        """
+        Simulates flush instruction.
+        When EHB is present, CT-Flush enforces a predefined constant waiting period (~70 cycles).
+        """
+        block = addr // LINE_SIZE
+        cached = self._invalidate_private(block)
+        cached = (self.llc[self._set(block)].pop(block, None) is not None) or cached
+        if self.ehb:
+            cached = (self.ehb.entries.pop(block, None) is not None) or cached
             
-        if self.mode in ['treasure_cache', 'ada_ehb']:
-            flush_latency = 70 + random.choice([0, 1])
-        else:
-            flush_latency = 95 if was_cached else 45
-            
-        self.tick(flush_latency)
-        return flush_latency
+        latency = self.LATENCY_CT_FLUSH if self.ehb else (95 if cached else 45)
+        self.time += latency
+        return latency

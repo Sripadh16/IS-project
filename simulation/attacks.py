@@ -1,220 +1,194 @@
 """
-attacks.py - Side-Channel Attack Implementations & Thrashing Evaluation
+attacks.py - Attack Models, Workloads, and Controlled Residency Experiments
 Models:
-  1. Prime+Probe Attack on AES-like table lookups (16 cache sets)
-  2. Evict+Time Attack measuring victim latency variation
-  3. Adversarial Thrashing Campaign targeting the Eviction-Hidden Buffer
-  4. Multi-trial statistical analysis with confidence intervals
+  - AES-like victim cryptographic table lookup workload
+  - Targeted LLC set eviction with explicit verification
+  - Domain-isolated residency trial (verifying TreasureCache ownership protection)
+  - Shared-memory contention trial (verifying Ada-EHB retention scoring under shared churn)
+  - Matched Evict+Time timing evaluation (comparing control vs post-eviction latencies)
 """
 
 import random
-import numpy as np
-from typing import Dict, List, Tuple
-from cache_model import MultiCoreCacheSystem
+from typing import Dict, List, Optional
+from cache_model import MultiCoreCacheSystem, LINE_SIZE
 
 
 class AESVictimWorkload:
     """
     Simulates a victim cryptographic process accessing a lookup table (e.g., AES S-Box / T-Table).
-    Table: 16 cache lines (1024 bytes) mapped to LLC sets 0..15.
+    Table: 16 cache lines mapped to LLC sets.
     """
     def __init__(self, base_addr: int = 0x100000):
         self.base_addr = base_addr
-        self.num_lines = 16
         self.secret_key = 0xA7
 
     def get_line_for_byte(self, val: int) -> int:
-        return (val >> 4) & 0x0F
+        return (val >> 4) & 15
 
-    def get_address_for_line(self, line_idx: int) -> int:
-        return self.base_addr + (line_idx * 64)
+    def get_address_for_line(self, line: int) -> int:
+        return self.base_addr + line * LINE_SIZE
 
-    def execute_encryption_round(self, cache_sys: MultiCoreCacheSystem, plaintext_byte: int) -> Tuple[int, str]:
-        intermediate_val = plaintext_byte ^ self.secret_key
-        target_line = self.get_line_for_byte(intermediate_val)
+    def execute_encryption_round(self, sys: MultiCoreCacheSystem, plaintext_byte: int):
+        target_line = self.get_line_for_byte(plaintext_byte ^ self.secret_key)
         target_addr = self.get_address_for_line(target_line)
-        latency, hit_level = cache_sys.read_address(core_id=0, addr=target_addr, domain_id=0, is_sensitive=True)
-        return latency, hit_level
+        return sys.read_address(core_id=0, addr=target_addr, domain_id=0, is_sensitive=True)
 
 
-class AttackerPrimeAndProbe:
+def force_llc_eviction(sys: MultiCoreCacheSystem, address: int, domain: int = 1, count: Optional[int] = None) -> bool:
     """
-    Simulates an attacker on Core 1 mounting a Prime+Probe attack
-    targeting the 16 LLC sets utilized by the victim's cryptographic table.
+    Evicts address's LLC set with conflicting lines on the attacker core.
+    Returns whether the target block was actually evicted from the LLC set.
     """
-    def __init__(self, target_set_indices: List[int], ways_to_prime: int = 16):
-        self.target_sets = target_set_indices
-        self.ways_to_prime = ways_to_prime
-
-    def get_eviction_addresses(self, set_idx: int, llc_num_sets: int) -> List[int]:
-        addrs = []
-        for way in range(self.ways_to_prime):
-            addr = ((way + 10) << (6 + int(np.log2(llc_num_sets)))) | (set_idx << 6)
-            addrs.append(addr)
-        return addrs
-
-    def prime(self, cache_sys: MultiCoreCacheSystem, set_idx: int):
-        addrs = self.get_eviction_addresses(set_idx, cache_sys.llc.num_sets)
-        for addr in addrs:
-            cache_sys.read_address(core_id=1, addr=addr, domain_id=1)
-
-    def probe(self, cache_sys: MultiCoreCacheSystem, set_idx: int) -> Tuple[int, int]:
-        addrs = self.get_eviction_addresses(set_idx, cache_sys.llc.num_sets)
-        total_latency = 0
-        miss_count = 0
-        for addr in addrs:
-            lat, _ = cache_sys.read_address(core_id=1, addr=addr, domain_id=1)
-            total_latency += lat
-            if lat > 60:
-                miss_count += 1
-        return total_latency, miss_count
-
-
-def run_prime_and_probe_simulation(mode: str = 'none', rounds: int = 300, thrash_intensity: int = 0, seed: int = 42) -> Dict:
-    """
-    Runs Prime+Probe campaign across 300 rounds.
-    thrash_intensity: Number of adversarial streaming cache lines accessed to overwhelm EHB.
-    """
-    random.seed(seed)
-    np.random.seed(seed)
+    block = address // LINE_SIZE
+    idx = sys._set(block)
+    ways_to_access = count if count is not None else (sys.llc_ways + 2)
     
-    cache_sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=64)
-    victim = AESVictimWorkload()
-    attacker = AttackerPrimeAndProbe(target_set_indices=list(range(16)), ways_to_prime=16)
-
-    correct_detections = 0
-    victim_latencies = []
-    ehb_hits_count = 0
-    dram_misses_count = 0
-
-    for r in range(rounds):
-        p_byte = random.randint(0, 255)
-        expected_secret_line = victim.get_line_for_byte(p_byte ^ victim.secret_key)
+    for j in range(ways_to_access):
+        conflict_block = (100000 + j) * sys.llc_sets + idx
+        sys.read_address(core_id=1, addr=conflict_block * LINE_SIZE, domain_id=domain)
         
-        # 1. Attacker primes all 16 target sets in LLC
-        for s in range(16):
-            attacker.prime(cache_sys, s)
+    return block not in sys.llc[idx]
 
-        # 2. Adversarial Thrashing Injection:
-        # Attacker generates streaming memory accesses to induce massive LLC evictions
-        # and overwhelm the EHB buffer.
-        if thrash_intensity > 0:
-            for noise_idx in range(thrash_intensity):
-                noise_addr = 0x900000 + (noise_idx * 64)
-                cache_sys.read_address(core_id=1, addr=noise_addr, domain_id=1, is_sensitive=False)
 
-        # 3. Victim executes one encryption round
-        v_lat, v_level = victim.execute_encryption_round(cache_sys, p_byte)
-        victim_latencies.append(v_lat)
-        if v_level == "EHB_HIT":
-            ehb_hits_count += 1
-        elif v_level == "DRAM_MISS":
-            dram_misses_count += 1
-
-        # 4. Attacker probes all 16 sets
-        probe_results = {}
-        for s in range(16):
-            total_lat, misses = attacker.probe(cache_sys, s)
-            probe_results[s] = total_lat
-
-        # Attacker selects set with maximum observed latency
-        max_val = max(probe_results.values())
-        candidates = [k for k, v in probe_results.items() if v == max_val]
-        predicted_line = random.choice(candidates)
-
-        if predicted_line == expected_secret_line:
-            correct_detections += 1
-
-    accuracy = correct_detections / rounds
+def run_residency_trial(mode: str, capacity: int, churn: int, seed: int, working_set: int = 8) -> Dict:
+    """
+    Domain-isolated residency trial:
+    Victim owns lines in Domain 0. Attacker generates churn strictly in Domain 1.
+    Evaluates whether TreasureCache's domain ownership mechanism successfully isolates
+    victim-owned lines from private attacker churn.
+    """
+    sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=capacity, seed=seed, llc_sets=32, llc_ways=4)
+    rng = random.Random(seed)
+    victim_addrs = [(0x100000 // LINE_SIZE + i) * LINE_SIZE for i in range(working_set)]
+    
+    # 1. Victim touches sensitive lines
+    for a in victim_addrs:
+        sys.read_address(core_id=0, addr=a, domain_id=0, is_sensitive=True)
+        
+    # 2. Force each victim line out of LLC into EHB using conflict addresses
+    for a in victim_addrs:
+        force_llc_eviction(sys, a, count=6)
+        
+    initial_buffered = sum(sys.ehb.contains(a // LINE_SIZE) for a in victim_addrs) if sys.ehb else 0
+    
+    # 3. Attacker accesses distinct private lines in Domain 1
+    for j in range(churn):
+        addr = ((200000 + j) * sys.llc_sets + (j % sys.llc_sets)) * LINE_SIZE
+        sys.read_address(core_id=1, addr=addr, domain_id=1, is_sensitive=False)
+        
+    retained = sum(sys.ehb.contains(a // LINE_SIZE) for a in victim_addrs) if sys.ehb else 0
+    
+    # 4. Probe victim lines and record hit level and latency
+    results = []
+    for a in victim_addrs:
+        lat, level = sys.read_address(core_id=0, addr=a, domain_id=0, is_sensitive=True)
+        results.append({'latency': lat, 'level': level})
+        
     return {
-        "mode": mode,
-        "rounds": rounds,
-        "accuracy": accuracy,
-        "victim_latencies": victim_latencies,
-        "ehb_hits": ehb_hits_count,
-        "dram_misses": dram_misses_count
+        'initial_buffered': initial_buffered,
+        'retained': retained,
+        'working_set': working_set,
+        'ehb_hits': sum(r['level'] == 'EHB_HIT' for r in results),
+        'dram_misses': sum(r['level'] == 'DRAM_MISS' for r in results),
+        'mean_latency': sum(r['latency'] for r in results) / len(results),
+        'stats': sys.stats,
+        'bypasses': sys.ehb.bypasses if sys.ehb else 0
     }
 
 
-def run_evict_and_time_simulation(mode: str = 'none', rounds: int = 200, seed: int = 42) -> Dict:
+def run_shared_contention_trial(mode: str, capacity: int, shared_churn: int, seed: int, working_set: int = 8) -> Dict:
     """
-    Evaluates Evict+Time attack measuring victim execution timing gap.
+    Shared-memory contention trial:
+    Models shared library pages (e.g. OpenSSL libcrypto.so) where blocks have joint ownership {0, 1}.
+    Victim has hot, sensitive cryptographic table lines (high frequency, sensitive=True).
+    Attacker rapidly calls shared utility routines, generating churn on non-sensitive shared blocks.
+    Evaluates where Ada-EHB retention scoring and token-bucket rate-limiting protect hot victim
+    lines against unweighted LRU displacement in Standard TreasureCache.
     """
-    random.seed(seed)
-    np.random.seed(seed)
+    sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=capacity, seed=seed, llc_sets=32, llc_ways=4)
+    victim_addrs = [(0x100000 // LINE_SIZE + i) * LINE_SIZE for i in range(working_set)]
     
-    cache_sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=64)
-    victim = AESVictimWorkload()
-    attacker = AttackerPrimeAndProbe(target_set_indices=[0], ways_to_prime=16)
+    # 1. Victim accesses sensitive shared lines multiple times (establishing access frequency)
+    for _ in range(3):
+        for a in victim_addrs:
+            # Shared line owned by Domain 0 and Domain 1
+            sys.read_address(core_id=0, addr=a, domain_id=0, is_sensitive=True)
+            sys.read_address(core_id=1, addr=a, domain_id=1, is_sensitive=True)
+            
+    # 2. Force victim lines out of LLC into EHB
+    for a in victim_addrs:
+        force_llc_eviction(sys, a, count=6)
+        
+    initial_buffered = sum(sys.ehb.contains(a // LINE_SIZE) for a in victim_addrs) if sys.ehb else 0
+    
+    # 3. Attacker injects shared non-sensitive churn lines that qualify for EHB insertion
+    for j in range(shared_churn):
+        shared_churn_addr = ((400000 + j) * sys.llc_sets + (j % sys.llc_sets)) * LINE_SIZE
+        # Present in Core 0 (has sharers) and owned by {0, 1}
+        sys.read_address(core_id=0, addr=shared_churn_addr, domain_id=0, is_sensitive=False)
+        sys.read_address(core_id=1, addr=shared_churn_addr, domain_id=1, is_sensitive=False)
+        # Force eviction of shared churn line into EHB
+        force_llc_eviction(sys, shared_churn_addr, count=6)
+        
+    retained = sum(sys.ehb.contains(a // LINE_SIZE) for a in victim_addrs) if sys.ehb else 0
+    
+    # 4. Probe victim lines
+    results = []
+    for a in victim_addrs:
+        lat, level = sys.read_address(core_id=0, addr=a, domain_id=0, is_sensitive=True)
+        results.append({'latency': lat, 'level': level})
+        
+    return {
+        'initial_buffered': initial_buffered,
+        'retained': retained,
+        'working_set': working_set,
+        'ehb_hits': sum(r['level'] == 'EHB_HIT' for r in results),
+        'dram_misses': sum(r['level'] == 'DRAM_MISS' for r in results),
+        'mean_latency': sum(r['latency'] for r in results) / len(results),
+        'stats': sys.stats,
+        'bypasses': sys.ehb.bypasses if sys.ehb else 0
+    }
 
+
+def run_evict_and_time_simulation(mode: str = 'none', rounds: int = 50, seed: int = 42, thrash_intensity: int = 0) -> Dict:
+    """
+    Matched control vs post-eviction victim timing measurement across identical sequences.
+    """
+    rng = random.Random(seed)
     evicted_times = []
-    non_evicted_times = []
-
-    for r in range(rounds):
-        p_byte = victim.secret_key ^ random.randint(0, 15)
+    control_times = []
+    levels = []
+    
+    for i in range(rounds):
+        target_addr = 0x100000
         
-        # Scenario A: Target set is evicted beforehand by attacker
-        attacker.prime(cache_sys, 0)
-        t_evicted, _ = victim.execute_encryption_round(cache_sys, p_byte)
-        evicted_times.append(t_evicted)
+        # Scenario A: Baseline Control (LLC-resident hit control)
+        control_sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=64, seed=seed + i, llc_sets=32, llc_ways=4)
+        control_sys.read_address(core_id=0, addr=target_addr, domain_id=0, is_sensitive=True)
+        # Invalidate private copies so the subsequent access tests LLC/EHB hit
+        control_sys._invalidate_private(target_addr // LINE_SIZE)
+        c_lat, _ = control_sys.read_address(core_id=0, addr=target_addr, domain_id=0, is_sensitive=True)
+        control_times.append(c_lat)
         
-        # Scenario B: Target line is cached (no eviction)
-        victim.execute_encryption_round(cache_sys, p_byte)
-        t_cached, _ = victim.execute_encryption_round(cache_sys, p_byte)
-        non_evicted_times.append(t_cached)
-
-    timing_gap = float(np.mean(evicted_times) - np.mean(non_evicted_times))
+        # Scenario B: Target line evicted by attacker, followed by churn
+        test_sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=64, seed=seed + i, llc_sets=32, llc_ways=4)
+        test_sys.read_address(core_id=0, addr=target_addr, domain_id=0, is_sensitive=True)
+        force_llc_eviction(test_sys, target_addr, count=6)
+        
+        for j in range(thrash_intensity):
+            churn_addr = ((300000 + j) * 32 + (j % 32)) * LINE_SIZE
+            test_sys.read_address(core_id=1, addr=churn_addr, domain_id=1, is_sensitive=False)
+            
+        t_lat, level = test_sys.read_address(core_id=0, addr=target_addr, domain_id=0, is_sensitive=True)
+        evicted_times.append(t_lat)
+        levels.append(level)
+        
     return {
-        "mode": mode,
-        "timing_gap": timing_gap,
-        "mean_evicted": float(np.mean(evicted_times)),
-        "mean_cached": float(np.mean(non_evicted_times)),
-        "evicted_samples": evicted_times,
-        "cached_samples": non_evicted_times
+        'timing_gap': sum(evicted_times) / rounds - sum(control_times) / rounds,
+        'mean_evicted': sum(evicted_times) / rounds,
+        'mean_cached': sum(control_times) / rounds,
+        'evicted_samples': evicted_times,
+        'cached_samples': control_times,
+        'ehb_hit_fraction': levels.count('EHB_HIT') / rounds,
+        'levels': {k: levels.count(k) for k in set(levels)}
     }
-
-
-def evaluate_buffer_hit_ratio_under_thrashing(mode: str, capacity: int, thrash_lines: int = 80, trials: int = 100, seed: int = 42) -> float:
-    """
-    Directly measures EHB hit ratio under adversarial thrashing.
-    Simulates a victim with 16 sensitive lines that get displaced from LLC by attacker traffic,
-    and measures whether victim re-accesses hit in EHB or miss to DRAM.
-    """
-    random.seed(seed)
-    np.random.seed(seed)
-    
-    cache_sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=capacity)
-    victim = AESVictimWorkload()
-    
-    ehb_hits = 0
-    ehb_misses = 0
-
-    for trial in range(trials):
-        # 1. Victim initializes/accesses working set (16 lines)
-        for line in range(16):
-            addr = victim.get_address_for_line(line)
-            cache_sys.read_address(core_id=0, addr=addr, domain_id=0, is_sensitive=True)
-
-        # 2. Attacker causes conflict evictions in LLC for victim lines -> forces into EHB
-        for s in range(16):
-            for way in range(16):
-                addr = ((way + 20) << (6 + 11)) | (s << 6)
-                cache_sys.read_address(core_id=1, addr=addr, domain_id=1, is_sensitive=False)
-
-        # 3. Attacker injects heavy thrashing noise traffic
-        for n in range(thrash_lines):
-            noise_addr = 0x800000 + (n * 64)
-            cache_sys.read_address(core_id=1, addr=noise_addr, domain_id=1, is_sensitive=False)
-
-        # 4. Victim re-accesses its 16 working set lines
-        for line in range(16):
-            addr = victim.get_address_for_line(line)
-            lat, level = cache_sys.read_address(core_id=0, addr=addr, domain_id=0, is_sensitive=True)
-            if level == "EHB_HIT":
-                ehb_hits += 1
-            elif level == "DRAM_MISS":
-                ehb_misses += 1
-
-    total = ehb_hits + ehb_misses
-    hit_ratio = (ehb_hits / total * 100.0) if total > 0 else 0.0
-    return hit_ratio

@@ -1,18 +1,34 @@
 """
 run_experiments.py - Multi-Trial Benchmark Execution & Publication Graph Generation
-Runs multi-core cache side-channel simulations across 5 random seeds,
-computes statistical means and standard deviations, evaluates Ada-EHB under thrashing,
-and generates publication-quality figures with explicit attribution and error bars.
+Runs reproducible, multi-trial experiments across 5 independent random seeds (101, 202, 303, 404, 505):
+  1. Domain-Isolated Contention Study (evaluating TreasureCache domain ownership protection)
+  2. Shared-Memory Contention Study (evaluating Ada-EHB retention scoring under shared churn)
+  3. Matched Evict+Time Timing Gap Study (evaluating timing channel closure)
+Generates structured simulation_results.json and publication-quality figures from real simulator output.
 """
 
-import os
 import json
-import random
-import numpy as np
+import os
+import statistics
 import matplotlib.pyplot as plt
 from typing import Dict, List
-from attacks import AESVictimWorkload, AttackerPrimeAndProbe, run_evict_and_time_simulation
-from cache_model import MultiCoreCacheSystem
+from attacks import run_residency_trial, run_shared_contention_trial, run_evict_and_time_simulation
+
+SEEDS = [101, 202, 303, 404, 505]
+MODES = ['none', 'treasure_cache', 'ada_ehb']
+CAPACITIES = [8, 16, 32, 64]
+CHURN_LEVELS = [0, 32, 128]
+
+
+def summarize(values: List[float]) -> Dict:
+    """Computes mean, standard deviation, and per-seed values."""
+    mean_val = statistics.mean(values)
+    std_val = statistics.stdev(values) if len(values) > 1 else 0.0
+    return {
+        'mean': round(mean_val, 3),
+        'std_across_seeds': round(std_val, 3),
+        'per_seed': [round(x, 3) for x in values]
+    }
 
 
 def setup_plot_style():
@@ -29,317 +45,166 @@ def setup_plot_style():
     })
 
 
-def run_prime_and_probe_trial(mode: str, rounds: int, thrash_lines: int, seed: int) -> float:
-    random.seed(seed)
-    np.random.seed(seed)
-    
-    cache_sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=64)
-    victim = AESVictimWorkload()
-    attacker = AttackerPrimeAndProbe(target_set_indices=list(range(16)), ways_to_prime=16)
-
-    correct_detections = 0
-
-    for r in range(rounds):
-        p_byte = random.randint(0, 255)
-        expected_line = victim.get_line_for_byte(p_byte ^ victim.secret_key)
-        
-        # 1. Attacker primes all 16 target sets
-        for s in range(16):
-            attacker.prime(cache_sys, s)
-
-        # 2. Adversarial Thrashing Injection:
-        if thrash_lines > 0:
-            for n in range(thrash_lines):
-                cache_sys.tick(5)
-                churn_set = n % 16
-                churn_addr = ((n + 50) << 17) | (churn_set << 6)
-                cache_sys.read_address(core_id=1, addr=churn_addr, domain_id=1, is_sensitive=False)
-
-        # 3. Victim executes encryption round
-        v_lat, _ = victim.execute_encryption_round(cache_sys, p_byte)
-
-        # 4. Attacker probes all sets
-        probe_results = {}
-        for s in range(16):
-            total_lat, misses = attacker.probe(cache_sys, s)
-            probe_results[s] = total_lat
-
-        max_lat = max(probe_results.values())
-        candidates = [k for k, v in probe_results.items() if v == max_lat]
-        predicted_line = random.choice(candidates)
-
-        if predicted_line == expected_line:
-            correct_detections += 1
-
-    return (correct_detections / rounds) * 100.0
-
-
-def evaluate_buffer_hit_ratio_curve(mode: str, capacity: int, trials: int = 30, seed: int = 42) -> float:
-    random.seed(seed)
-    np.random.seed(seed)
-    
-    ehb_hits = 0
-    dram_misses = 0
-
-    for trial in range(trials):
-        cs = MultiCoreCacheSystem(mode=mode, ehb_capacity=capacity)
-        
-        # 1. Victim warms 24 sensitive crypto lines (simulating AES T-tables and key schedule)
-        for i in range(24):
-            cs.tick(10)
-            addr = 0x100000 + (i * 64)
-            cs.read_address(0, addr, 0, is_sensitive=True)
-
-        # 2. Attacker causes conflict evictions of victim lines into EHB
-        for i in range(24):
-            set_idx = ((0x100000 + i * 64) >> 6) & 2047
-            for w in range(16):
-                cs.tick(5)
-                evict_addr = ((w + 100) << 17) | (set_idx << 6)
-                cs.read_address(1, evict_addr, 1, is_sensitive=False)
-
-        # 3. Attacker injects 48 churn lines of shared library evictions into EHB
-        for n in range(48):
-            cs.tick(10)
-            shared_addr = 0x600000 + (n * 64)
-            cs.read_address(0, shared_addr, 0, is_sensitive=False)
-            set_idx = (shared_addr >> 6) & 2047
-            for w in range(16):
-                cs.tick(5)
-                evict_shared = ((w + 200) << 17) | (set_idx << 6)
-                cs.read_address(1, evict_shared, 1, is_sensitive=False)
-
-        # 4. Victim re-accesses its 24 sensitive lines
-        for i in range(24):
-            cs.tick(10)
-            addr = 0x100000 + (i * 64)
-            lat, lvl = cs.read_address(0, addr, 0, is_sensitive=True)
-            if lvl == "EHB_HIT":
-                ehb_hits += 1
-            elif lvl == "DRAM_MISS":
-                dram_misses += 1
-
-    total = ehb_hits + dram_misses
-    return (ehb_hits / total * 100.0) if total > 0 else 0.0
-
-
-def run_all_benchmarks():
+def main():
     print("=" * 75)
-    print("Executing Rigorous Multi-Trial Benchmarks (TreasureCache & Ada-EHB)")
+    print("Executing TreasureCache & Ada-EHB Multi-Trial Benchmarks (5 Random Seeds)")
     print("=" * 75)
     
-    seeds = [101, 202, 303, 404, 505]
-    
-    # 1. Multi-trial Prime+Probe Evaluation
-    print("\n[1/3] Running Multi-Trial Prime+Probe Simulations (5 Seeds, 300 rounds each)...")
-    configs = [
-        ("unprotected", "none", 0),
-        ("partitioned", "partitioned", 0),
-        ("treasure_cache_clean", "treasure_cache", 0),
-        ("treasure_cache_thrashed", "treasure_cache", 48),
-        ("ada_ehb_thrashed", "ada_ehb", 48)
-    ]
-    
-    pp_stats = {}
-    for name, mode, thrash in configs:
-        accuracies = []
-        for s in seeds:
-            acc = run_prime_and_probe_trial(mode=mode, rounds=300, thrash_lines=thrash, seed=s)
-            accuracies.append(acc)
-        mean_acc = float(np.mean(accuracies))
-        std_acc = float(np.std(accuracies))
-        pp_stats[name] = {
-            "mean": round(mean_acc, 2),
-            "std": round(std_acc, 2),
-            "samples": [round(x, 2) for x in accuracies]
-        }
-        print(f"  -> {name:<26}: Mean = {mean_acc:5.2f}% | Std = {std_acc:4.2f}% | Runs = {accuracies}")
-
-    # 2. Evict+Time Evaluation
-    print("\n[2/3] Running Evict+Time Simulations (5 Seeds, 200 rounds each)...")
-    et_stats = {}
-    for name, mode in [("unprotected", "none"), ("partitioned", "partitioned"), ("treasure_cache", "treasure_cache"), ("ada_ehb", "ada_ehb")]:
-        gaps = []
-        evicted_samples_all = []
-        cached_samples_all = []
-        for s in seeds:
-            res = run_evict_and_time_simulation(mode=mode, rounds=200, seed=s)
-            gaps.append(res['timing_gap'])
-            if s == seeds[0]:
-                evicted_samples_all = res['evicted_samples']
-                cached_samples_all = res['cached_samples']
-        mean_gap = float(np.mean(gaps))
-        std_gap = float(np.std(gaps))
-        et_stats[name] = {
-            "mean_gap": round(mean_gap, 2),
-            "std_gap": round(std_gap, 2),
-            "evicted_samples": evicted_samples_all,
-            "cached_samples": cached_samples_all
-        }
-        print(f"  -> {name:<26}: Timing Gap = {mean_gap:5.2f} +/- {std_gap:4.2f} cycles")
-
-    # 3. Buffer Capacity Scaling Study Under Adversarial Thrashing
-    print("\n[3/3] Evaluating EHB Capacity Scaling (Buffer Hit Ratio under Adversarial Thrashing)...")
-    capacities = [16, 32, 64, 128, 256]
-    tc_hit_ratios = []
-    tc_hit_stds = []
-    ada_hit_ratios = []
-    ada_hit_stds = []
-    
-    for cap in capacities:
-        tc_runs = [evaluate_buffer_hit_ratio_curve('treasure_cache', cap, trials=25, seed=s) for s in seeds]
-        ada_runs = [evaluate_buffer_hit_ratio_curve('ada_ehb', cap, trials=25, seed=s) for s in seeds]
-        
-        tc_m = float(np.mean(tc_runs))
-        tc_s = float(np.std(tc_runs))
-        ada_m = float(np.mean(ada_runs))
-        ada_s = float(np.std(ada_runs))
-        
-        tc_hit_ratios.append(round(tc_m, 1))
-        tc_hit_stds.append(round(tc_s, 1))
-        ada_hit_ratios.append(round(ada_m, 1))
-        ada_hit_stds.append(round(ada_s, 1))
-        
-        print(f"  Capacity {cap:3d} lines: Standard TC = {tc_m:5.1f}% (+/- {tc_s:3.1f}%) | Ada-EHB = {ada_m:5.1f}% (+/- {ada_s:3.1f}%)")
-
-    # -------------------------------------------------------------
-    # Generate Publication Figures
-    # -------------------------------------------------------------
-    setup_plot_style()
-    output_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # FIGURE 1: Latency Distribution with Explicit Attribution
-    fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.6))
-    
-    unprot_evicted = et_stats['unprotected']['evicted_samples']
-    unprot_cached = et_stats['unprotected']['cached_samples']
-    ax1.hist(unprot_cached, bins=15, alpha=0.75, label='Cached Access (LLC Hit ~38 cyc)', color='#2b5c8f')
-    ax1.hist(unprot_evicted, bins=15, alpha=0.75, label='Evicted Access (DRAM Miss ~200 cyc)', color='#c0392b')
-    ax1.set_title('Unprotected Inclusive Cache\n(Exploitable 198-cycle Timing Disparity)', fontweight='bold')
-    ax1.set_xlabel('Access Latency (Cycles, Modeled Hierarchy)')
-    ax1.set_ylabel('Sample Frequency (N=200)')
-    ax1.legend(loc='upper right', frameon=True)
-    ax1.set_xlim(20, 240)
-    
-    tc_evicted = et_stats['treasure_cache']['evicted_samples']
-    tc_cached = et_stats['treasure_cache']['cached_samples']
-    ax2.hist(tc_cached, bins=15, alpha=0.75, label='Cached Access (LLC Hit ~38 cyc)', color='#2b5c8f')
-    ax2.hist(tc_evicted, bins=15, alpha=0.75, label='Evicted Access (EHB Hit ~40 cyc)', color='#27ae60')
-    ax2.set_title('TreasureCache Architecture\n(Timing Gap Closed via EHB at ~40 cyc)', fontweight='bold')
-    ax2.set_xlabel('Access Latency (Cycles, Modeled Hierarchy)')
-    ax2.legend(loc='upper right', frameon=True)
-    ax2.set_xlim(20, 240)
-    
-    fig1.suptitle('Simulation Evaluation: Memory Access Latency Distributions (Team Model Calibration)', fontsize=13, y=1.02)
-    plt.tight_layout()
-    fig1_path = os.path.join(output_dir, 'fig1_latency_distribution.png')
-    plt.savefig(fig1_path, dpi=300, bbox_inches='tight')
-    plt.close(fig1)
-    print(f"\n[Generated] {fig1_path}")
-
-    # FIGURE 2: Attacker Side-Channel Success Rate with Error Bars
-    fig2, ax = plt.subplots(figsize=(9.5, 5.2))
-    labels = [
-        'Unprotected\n(LRU Baseline)',
-        'Static\nPartitioning',
-        'TreasureCache\n(Clean)',
-        'TreasureCache\n(Thrashed)',
-        'Proposed Ada-EHB\n(Thrashed)'
-    ]
-    means = [
-        pp_stats['unprotected']['mean'],
-        pp_stats['partitioned']['mean'],
-        pp_stats['treasure_cache_clean']['mean'],
-        pp_stats['treasure_cache_thrashed']['mean'],
-        pp_stats['ada_ehb_thrashed']['mean']
-    ]
-    stds = [
-        pp_stats['unprotected']['std'],
-        pp_stats['partitioned']['std'],
-        pp_stats['treasure_cache_clean']['std'],
-        pp_stats['treasure_cache_thrashed']['std'],
-        pp_stats['ada_ehb_thrashed']['std']
-    ]
-    colors = ['#c0392b', '#7f8c8d', '#27ae60', '#e67e22', '#2980b9']
-    
-    bars = ax.bar(labels, means, yerr=stds, capsize=5, color=colors, width=0.55, edgecolor='black', linewidth=0.9)
-    ax.axhline(y=6.25, color='#444444', linestyle='--', linewidth=1.3, label='Theoretical Random-Guess Expectation (1/16 = 6.25%)')
-    
-    for bar, m, s in zip(bars, means, stds):
-        yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2.0, yval + s + 1.8, f"{m:.1f}% ± {s:.1f}%", ha='center', va='bottom', fontweight='bold', fontsize=9.5)
-        
-    ax.set_ylim(0, 115)
-    ax.set_ylabel('Attacker Secret Identification Accuracy (%)', fontweight='bold')
-    ax.set_title('Prime+Probe Attacker Success Rate Across Defenses (5 Independent Seeds, N=300 Rounds)\n(Attacker predicts which of 16 LLC sets was accessed)', fontweight='bold')
-    ax.legend(loc='upper right', frameon=True)
-    
-    plt.tight_layout()
-    fig2_path = os.path.join(output_dir, 'fig2_attack_success_rate.png')
-    plt.savefig(fig2_path, dpi=300, bbox_inches='tight')
-    plt.close(fig2)
-    print(f"[Generated] {fig2_path}")
-
-    # FIGURE 3: Buffer Capacity vs Hit Ratio Under Adversarial Thrashing
-    fig3, ax = plt.subplots(figsize=(8.5, 5.0))
-    x_indices = np.arange(len(capacities))
-    width = 0.35
-    
-    ax.bar(x_indices - width/2, tc_hit_ratios, width, yerr=tc_hit_stds, capsize=4, label='Standard TreasureCache EHB (Ownership/LRU)', color='#e67e22', edgecolor='black')
-    ax.bar(x_indices + width/2, ada_hit_ratios, width, yerr=ada_hit_stds, capsize=4, label='Proposed Ada-EHB (Retention Score & Rate Limiting)', color='#2980b9', edgecolor='black')
-    
-    ax.set_xlabel('Buffer Capacity (Cache Lines / Kilobytes)', fontweight='bold')
-    ax.set_ylabel('Eviction Buffer Hit Ratio (%)', fontweight='bold')
-    ax.set_title('Eviction-Hidden Buffer Hit Ratio Under Adversarial Thrashing\n(Attacker Injects Sustained Shared Churn into Monitored Sets)', fontweight='bold')
-    ax.set_xticks(x_indices)
-    ax.set_xticklabels([f"{c} lines\n({(c*64)/1024:.1f} KB)" for c in capacities])
-    ax.set_ylim(0, 115)
-    ax.legend(loc='lower right', frameon=True)
-    
-    for i in range(len(capacities)):
-        ax.text(x_indices[i] - width/2, tc_hit_ratios[i] + tc_hit_stds[i] + 1.8, f"{tc_hit_ratios[i]:.1f}%", ha='center', fontsize=9)
-        ax.text(x_indices[i] + width/2, ada_hit_ratios[i] + ada_hit_stds[i] + 1.8, f"{ada_hit_ratios[i]:.1f}%", ha='center', fontsize=9, fontweight='bold')
-
-    plt.tight_layout()
-    fig3_path = os.path.join(output_dir, 'fig3_performance_tradeoff.png')
-    plt.savefig(fig3_path, dpi=300, bbox_inches='tight')
-    plt.close(fig3)
-    print(f"[Generated] {fig3_path}")
-
-    # Save summary json
-    summary_data = {
-        "simulation_parameters": {
-            "l1_hit_latency_cycles": 4,
-            "l2_hit_latency_cycles": 12,
-            "llc_hit_latency_cycles": 38,
-            "ehb_hit_latency_cycles": 40,
-            "dram_latency_cycles": 200,
-            "ct_flush_latency_cycles": 70,
-            "random_guess_expectation_percent": 6.25,
-            "num_seeds": len(seeds),
-            "seeds": seeds,
-            "rounds_per_seed": 300
-        },
-        "prime_and_probe": pp_stats,
-        "evict_and_time": {
-            k: {"mean_gap": v["mean_gap"], "std_gap": v["std_gap"]} for k, v in et_stats.items()
-        },
-        "capacity_study": {
-            "capacities_lines": capacities,
-            "capacities_kb": [(c*64)/1024 for c in capacities],
-            "tc_hit_ratios_mean": tc_hit_ratios,
-            "tc_hit_ratios_std": tc_hit_stds,
-            "ada_hit_ratios_mean": ada_hit_ratios,
-            "ada_hit_ratios_std": ada_hit_stds
-        }
+    results = {
+        'model_description': 'Sequential synthetic cache-event simulator (educational model; not full-system gem5).',
+        'seeds': SEEDS,
+        'scope_and_limitations': (
+            'Demonstrates microarchitectural event flow, dual-condition placement, domain ownership isolation, '
+            'and retention scoring under controlled workloads. Does not claim full-system gem5 cycle-accuracy or key recovery.'
+        ),
+        'residency_isolated': {},
+        'residency_shared': {},
+        'timing_evict_and_time': {}
     }
-    
+
+    # -------------------------------------------------------------
+    # 1. Domain-Isolated Contention Study
+    # -------------------------------------------------------------
+    print("\n[1/3] Running Domain-Isolated Contention Experiments...")
+    for mode in MODES:
+        for cap in CAPACITIES:
+            for churn in CHURN_LEVELS:
+                samples = [run_residency_trial(mode=mode, capacity=cap, churn=churn, seed=s) for s in SEEDS]
+                key = f"{mode}_cap{cap}_churn{churn}"
+                results['residency_isolated'][key] = {
+                    'buffered_before_churn': summarize([s['initial_buffered'] for s in samples]),
+                    'buffered_after_churn': summarize([s['retained'] for s in samples]),
+                    'ehb_hits': summarize([s['ehb_hits'] for s in samples]),
+                    'dram_misses': summarize([s['dram_misses'] for s in samples]),
+                    'mean_victim_latency': summarize([s['mean_latency'] for s in samples]),
+                    'bypasses': summarize([s['bypasses'] for s in samples])
+                }
+                print(f"  -> {key:<28}: Retained = {results['residency_isolated'][key]['buffered_after_churn']['mean']:.2f} / 8 lines | Latency = {results['residency_isolated'][key]['mean_victim_latency']['mean']:.1f} cyc")
+
+    # -------------------------------------------------------------
+    # 2. Shared-Memory Contention Study
+    # -------------------------------------------------------------
+    print("\n[2/3] Running Shared-Memory Contention Experiments (Joint Ownership {0, 1})...")
+    for mode in ['treasure_cache', 'ada_ehb']:
+        for cap in CAPACITIES:
+            for churn in [16, 48]:
+                samples = [run_shared_contention_trial(mode=mode, capacity=cap, shared_churn=churn, seed=s) for s in SEEDS]
+                key = f"{mode}_cap{cap}_sharedchurn{churn}"
+                results['residency_shared'][key] = {
+                    'buffered_before_churn': summarize([s['initial_buffered'] for s in samples]),
+                    'buffered_after_churn': summarize([s['retained'] for s in samples]),
+                    'ehb_hits': summarize([s['ehb_hits'] for s in samples]),
+                    'dram_misses': summarize([s['dram_misses'] for s in samples]),
+                    'mean_victim_latency': summarize([s['mean_latency'] for s in samples]),
+                    'bypasses': summarize([s['bypasses'] for s in samples])
+                }
+                print(f"  -> {key:<32}: Retained = {results['residency_shared'][key]['buffered_after_churn']['mean']:.2f} / 8 lines | Latency = {results['residency_shared'][key]['mean_victim_latency']['mean']:.1f} cyc")
+
+    # -------------------------------------------------------------
+    # 3. Matched Evict+Time Experiments
+    # -------------------------------------------------------------
+    print("\n[3/3] Running Matched Evict+Time Timing Gap Experiments...")
+    for mode in MODES:
+        for churn in [0, 64]:
+            runs = [run_evict_and_time_simulation(mode=mode, rounds=40, seed=s, thrash_intensity=churn) for s in SEEDS]
+            key = f"{mode}_churn{churn}"
+            results['timing_evict_and_time'][key] = {
+                'timing_gap': summarize([x['timing_gap'] for x in runs]),
+                'mean_evicted': summarize([x['mean_evicted'] for x in runs]),
+                'mean_cached': summarize([x['mean_cached'] for x in runs]),
+                'ehb_hit_fraction': summarize([x['ehb_hit_fraction'] for x in runs]),
+                'levels_seed_101': runs[0]['levels']
+            }
+            print(f"  -> {key:<24}: Timing Gap = {results['timing_evict_and_time'][key]['timing_gap']['mean']:6.2f} +/- {results['timing_evict_and_time'][key]['timing_gap']['std_across_seeds']:4.2f} cycles")
+
+    # Save JSON results
+    output_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(output_dir, 'simulation_results.json')
     with open(json_path, 'w') as f:
-        json.dump(summary_data, f, indent=4)
-    print(f"[Generated] {json_path}")
-    print("\nAll multi-trial benchmarks and plots completed successfully!\n")
+        json.dump(results, f, indent=2)
+    print(f"\n[Generated JSON] {json_path}")
+
+    # -------------------------------------------------------------
+    # 4. Generate Publication-Quality Figures from Actual Simulator Output
+    # -------------------------------------------------------------
+    setup_plot_style()
+
+    # FIGURE 1: Victim Buffer Residency across Capacities (Domain-Isolated Churn)
+    fig1, ax1 = plt.subplots(figsize=(8, 4.8))
+    for mode, color, marker, label in [
+        ('treasure_cache', '#e67e22', 'o', 'TreasureCache (Ownership / LRU)'),
+        ('ada_ehb', '#2980b9', 's', 'Ada-EHB (Retention Scoring)')
+    ]:
+        xs = CAPACITIES
+        ys = [results['residency_isolated'][f"{mode}_cap{c}_churn128"]['buffered_after_churn']['mean'] for c in xs]
+        yerrs = [results['residency_isolated'][f"{mode}_cap{c}_churn128"]['buffered_after_churn']['std_across_seeds'] for c in xs]
+        ax1.errorbar(xs, ys, yerr=yerrs, marker=marker, color=color, linewidth=2, markersize=7, capsize=4, label=label)
+
+    ax1.axhline(y=8, color='gray', linestyle='--', linewidth=1.2, label='Total Victim Working Set (8 lines)')
+    ax1.set_xlabel('EHB Buffer Capacity (Lines)', fontweight='bold')
+    ax1.set_ylabel('Victim Lines Retained in Buffer', fontweight='bold')
+    ax1.set_title('Victim Buffer Residency Under Domain-Isolated Churn (128 Churn Lines, 5 Seeds)\n(Demonstrates TreasureCache Ownership Quota Isolation)', fontweight='bold')
+    ax1.set_xticks(CAPACITIES)
+    ax1.set_ylim(-0.5, 9.5)
+    ax1.legend(loc='lower right', frameon=True)
+    plt.tight_layout()
+    fig1_path = os.path.join(output_dir, 'fig1_residency.png')
+    plt.savefig(fig1_path, dpi=200, bbox_inches='tight')
+    plt.close(fig1)
+    print(f"[Generated Figure 1] {fig1_path}")
+
+    # FIGURE 2: Mean Victim Access Latency across Capacities
+    fig2, ax2 = plt.subplots(figsize=(8, 4.8))
+    # Unprotected baseline line
+    unprot_latency = results['residency_isolated']['none_cap64_churn128']['mean_victim_latency']['mean']
+    ax2.axhline(y=unprot_latency, color='#c0392b', linestyle='--', linewidth=2, label=f'Unprotected Baseline (~{unprot_latency:.0f} cyc, DRAM Misses)')
+
+    for mode, color, marker, label in [
+        ('treasure_cache', '#e67e22', 'o', 'TreasureCache (Protected ~40 cyc)'),
+        ('ada_ehb', '#2980b9', 's', 'Ada-EHB (Protected ~40 cyc)')
+    ]:
+        xs = CAPACITIES
+        ys = [results['residency_isolated'][f"{mode}_cap{c}_churn128"]['mean_victim_latency']['mean'] for c in xs]
+        yerrs = [results['residency_isolated'][f"{mode}_cap{c}_churn128"]['mean_victim_latency']['std_across_seeds'] for c in xs]
+        ax2.errorbar(xs, ys, yerr=yerrs, marker=marker, color=color, linewidth=2, markersize=7, capsize=4, label=label)
+
+    ax2.set_xlabel('EHB Buffer Capacity (Lines)', fontweight='bold')
+    ax2.set_ylabel('Mean Victim Access Latency (Cycles)', fontweight='bold')
+    ax2.set_title('Victim Access Latency After LLC Eviction (128 Churn Lines, 5 Seeds)\n(Closing the Timing Gap from 200 cycles to ~40 cycles)', fontweight='bold')
+    ax2.set_xticks(CAPACITIES)
+    ax2.set_ylim(20, 220)
+    ax2.legend(loc='upper right', frameon=True)
+    plt.tight_layout()
+    fig2_path = os.path.join(output_dir, 'fig2_victim_latency.png')
+    plt.savefig(fig2_path, dpi=200, bbox_inches='tight')
+    plt.close(fig2)
+    print(f"[Generated Figure 2] {fig2_path}")
+
+    # FIGURE 3: Shared-Memory Contention Study (Where Ada-EHB Differentiates)
+    fig3, ax3 = plt.subplots(figsize=(8, 4.8))
+    xs = CAPACITIES
+    ys_tc = [results['residency_shared'][f"treasure_cache_cap{c}_sharedchurn48"]['buffered_after_churn']['mean'] for c in xs]
+    ys_ada = [results['residency_shared'][f"ada_ehb_cap{c}_sharedchurn48"]['buffered_after_churn']['mean'] for c in xs]
+    
+    width = 2.0
+    ax3.bar([x - width/2 for x in xs], ys_tc, width=width, label='Standard TreasureCache (Unweighted LRU)', color='#e67e22', edgecolor='black')
+    ax3.bar([x + width/2 for x in xs], ys_ada, width=width, label='Proposed Ada-EHB (Retention Scoring & Rate-Limiting)', color='#2980b9', edgecolor='black')
+    
+    ax3.axhline(y=8, color='gray', linestyle='--', linewidth=1.2, label='Total Victim Working Set (8 lines)')
+    ax3.set_xlabel('EHB Buffer Capacity (Lines)', fontweight='bold')
+    ax3.set_ylabel('Victim Lines Retained in Buffer', fontweight='bold')
+    ax3.set_title('Shared-Memory Contention Study (Joint Ownership {0, 1}, 48 Shared Churn Lines)\n(Demonstrates Ada-EHB Protection under Shared Library Churn)', fontweight='bold')
+    ax3.set_xticks(xs)
+    ax3.set_ylim(0, 9.5)
+    ax3.legend(loc='lower right', frameon=True)
+    plt.tight_layout()
+    fig3_path = os.path.join(output_dir, 'fig3_shared_contention.png')
+    plt.savefig(fig3_path, dpi=200, bbox_inches='tight')
+    plt.close(fig3)
+    print(f"[Generated Figure 3] {fig3_path}")
+
+    print("\nAll experiments, JSON outputs, and publication plots generated successfully!\n")
 
 
 if __name__ == '__main__':
-    run_all_benchmarks()
+    main()
