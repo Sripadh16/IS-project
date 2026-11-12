@@ -1,7 +1,7 @@
 """
 build_presentation.py - Programmatically creates the professional PowerPoint Presentation (.pptx)
-for the TreasureCache research paper analysis and course project deliverables.
-Includes high-res figures, structured cards, and detailed presenter notes.
+incorporating all evaluator feedback, formal Ada-EHB equations, updated figures,
+and a dedicated references slide.
 """
 
 import os
@@ -10,13 +10,10 @@ import pptx
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
 
-# -------------------------------------------------------------
-# Color Palette & Layout
-# -------------------------------------------------------------
 COLOR_PRIMARY = RGBColor(27, 54, 93)      # Deep Navy #1B365D
 COLOR_SECONDARY = RGBColor(70, 95, 133)   # Slate Blue #465F85
 COLOR_DARK_TEXT = RGBColor(33, 37, 41)    # Charcoal #212529
@@ -34,9 +31,7 @@ def set_slide_background(slide, color):
     fill.fore_color.rgb = color
 
 
-def add_header(slide, title_text, category_text="RESEARCH PAPER ANALYSIS"):
-    """Adds a standardized clean header banner to content slides."""
-    # Category tag
+def add_header(slide, title_text, category_text="RESEARCH PAPER ANALYSIS & EXTENSION"):
     tb_cat = slide.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(11.7), Inches(0.35))
     tf_cat = tb_cat.text_frame
     tf_cat.word_wrap = True
@@ -47,20 +42,18 @@ def add_header(slide, title_text, category_text="RESEARCH PAPER ANALYSIS"):
     p_cat.font.bold = True
     p_cat.font.color.rgb = COLOR_SECONDARY
     
-    # Title
     tb_title = slide.shapes.add_textbox(Inches(0.8), Inches(0.7), Inches(11.7), Inches(0.7))
     tf_title = tb_title.text_frame
     tf_title.word_wrap = True
     p_title = tf_title.paragraphs[0]
     p_title.text = title_text
     p_title.font.name = "Calibri"
-    p_title.font.size = Pt(24)
+    p_title.font.size = Pt(23)
     p_title.font.bold = True
     p_title.font.color.rgb = COLOR_PRIMARY
 
 
 def add_card(slide, left, top, width, height, title, items, border_color=None):
-    """Draws a clean white card container with structured text items."""
     shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, left, top, width, height)
     shape.fill.solid()
     shape.fill.fore_color.rgb = COLOR_CARD_BG
@@ -75,19 +68,18 @@ def add_card(slide, left, top, width, height, title, items, border_color=None):
         p_title = tf.paragraphs[0]
         p_title.text = title
         p_title.font.name = "Calibri"
-        p_title.font.size = Pt(15)
+        p_title.font.size = Pt(14)
         p_title.font.bold = True
         p_title.font.color.rgb = COLOR_PRIMARY
-        p_title.space_after = Pt(8)
+        p_title.space_after = Pt(6)
         
     for item in items:
         p = tf.add_paragraph()
         p.text = item
         p.font.name = "Calibri"
-        p.font.size = Pt(12)
+        p.font.size = Pt(11.5)
         p.font.color.rgb = COLOR_DARK_TEXT
-        p.space_after = Pt(6)
-        p.level = 0
+        p.space_after = Pt(5)
 
 
 def set_speaker_notes(slide, notes_text):
@@ -102,7 +94,6 @@ def generate_presentation():
     prs.slide_height = Inches(7.5)
     blank_layout = prs.slide_layouts[6]
 
-    # Load simulation results for reference
     sim_data_path = os.path.join(os.path.dirname(__file__), 'simulation', 'simulation_results.json')
     with open(sim_data_path, 'r') as f:
         sim_metrics = json.load(f)
@@ -118,7 +109,7 @@ def generate_presentation():
     tf1.word_wrap = True
     
     p_tag = tf1.paragraphs[0]
-    p_tag.text = "RESEARCH PAPER ANALYSIS & EXPERIMENTAL VALIDATION"
+    p_tag.text = "RESEARCH PAPER ANALYSIS & ARCHITECTURAL VALIDATION"
     p_tag.font.name = "Calibri"
     p_tag.font.size = Pt(14)
     p_tag.font.bold = True
@@ -134,8 +125,8 @@ def generate_presentation():
     p_title.space_after = Pt(14)
     
     p_sub = tf1.add_paragraph()
-    p_sub.text = "Original Authors: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (IEEE TDSC 2024)\n" \
-                 "Course Analysis Team 06 | Comprehensive Architecture Study & Ada-EHB Extension"
+    p_sub.text = "Original Paper Authors: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (IEEE TDSC 2024 [1])\n" \
+                 "Team 06: Kontham Sripadha (Lead Analyst & Simulation Engineer), and Research Group"
     p_sub.font.name = "Calibri"
     p_sub.font.size = Pt(15)
     p_sub.font.color.rgb = RGBColor(220, 230, 242)
@@ -143,12 +134,11 @@ def generate_presentation():
     set_speaker_notes(
         s1,
         "SPEAKER (Lead / Introduction):\n"
-        "Welcome everyone. Today our team is presenting our comprehensive research analysis and experimental "
-        "validation of the paper 'TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks', published in "
-        "IEEE Transactions on Dependable and Secure Computing in 2024. In this presentation, we will walk through "
-        "the core research problem of cross-core cache side channels, evaluate TreasureCache's innovative paradigm "
-        "of hiding evictions rather than preventing them, present our critical assessment and identified research gaps, "
-        "and showcase our own experimental implementation including our proposed extension, Ada-EHB."
+        "Welcome everyone. Today our team is presenting our research analysis and experimental validation of the paper "
+        "'TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks', published in IEEE TDSC in 2024. "
+        "In this presentation, we will walk through the microarchitectural root problem of cross-core cache side channels, "
+        "evaluate TreasureCache's innovative paradigm of hiding evictions rather than preventing them, discuss our critical assessment, "
+        "and present our independent contribution: Ada-EHB, an adaptive frequency-aware eviction buffer validated through simulation."
     )
 
     # =============================================================
@@ -156,43 +146,44 @@ def generate_presentation():
     # =============================================================
     s2 = prs.slides.add_slide(blank_layout)
     set_slide_background(s2, COLOR_LIGHT_BG)
-    add_header(s2, "The Root Problem: Shared Inclusive LLC Timing Channels")
+    add_header(s2, "The Root Problem: Memory Hierarchy Timing Disparities")
     
     add_card(
         s2, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
-        "Microarchitectural Sharing Vulnerability",
+        "Multi-Level Inclusive Cache Architecture",
         [
-            "• Modern multi-core processors share a massive Last-Level Cache (LLC) to optimize memory throughput across cores.",
-            "• Inclusive LLC Invariant: Any cache line present in private L1/L2 caches MUST also reside in the shared LLC.",
-            "• When an LLC cache set is filled, an eviction forces back-invalidation of lines from private L1/L2 caches.",
-            "• Unprivileged cross-core attackers can deliberately induce LLC conflicts and force victim lines out of the cache hierarchy."
+            "• Modern processors implement private L1/L2 caches per core alongside a large shared Last-Level Cache (LLC).",
+            "• Inclusive Cache Invariant: Any line resident in private L1/L2 caches MUST also reside in the shared LLC.",
+            "• Coherence Back-Invalidation: When an LLC set is full, evicting an LLC line forcibly ejects it from private L1/L2 caches.",
+            "• Cross-core attackers can intentionally prime LLC sets to trigger back-invalidations of victim lines across cores."
         ]
     )
     
     add_card(
         s2, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "The Timing Side Channel Disparity",
+        "Hierarchical Latency Disparity (Modeled)",
         [
-            "• Cache Hit Latency: ~38 to 42 CPU cycles (instant data availability).",
-            "• DRAM Miss Latency: ~180 to 240 CPU cycles (long memory bus delay).",
-            "• The observable ~200-cycle timing gap creates an unmistakable signal.",
-            "• Attackers leverage cycle counters (RDTSC) to monitor when victim crypto routines (AES S-Boxes, RSA modular exponentiation) experience hits vs misses.",
-            "• Result: Catastrophic cryptographic key leakage across virtual machines and process boundaries without privilege."
+            "• Private L1 Data Cache Hit: ~4 CPU cycles (fastest).",
+            "• Private L2 Cache Hit: ~12 CPU cycles.",
+            "• Shared LLC Cache Hit: ~38 CPU cycles (on-chip lookup).",
+            "• Main Memory DRAM Miss: ~200 CPU cycles (long off-chip bus delay).",
+            "• The 160-to-200-cycle timing gap between an LLC hit and a DRAM miss creates an unmistakable timing channel.",
+            "• Attackers use unprivileged cycle counters (RDTSC) to monitor victim cryptographic lookups (AES S-Boxes, RSA) across security domains."
         ],
         border_color=COLOR_ALERT
     )
     
     set_speaker_notes(
         s2,
-        "SPEAKER (Member 1 - Problem & Motivation):\n"
-        "To understand the core problem: modern multi-core processors use inclusive Last-Level Caches to maintain "
-        "coherence. If an LLC set fills up, an eviction in the LLC triggers hardware back-invalidation into private L1 and L2 caches. "
-        "Because an LLC hit takes around 38 cycles while a DRAM miss takes over 200 cycles, an attacker on an adjacent core "
-        "can monitor this timing difference. This allows cross-core, cross-VM extraction of secret keys during AES or RSA operations."
+        "SPEAKER (Member 1 - Problem & Latency Hierarchy):\n"
+        "To understand the core problem: modern multi-core processors use multi-level inclusive caches. "
+        "Notice the distinct latency tiers: private L1 hits take 4 cycles, L2 hits take 12 cycles, LLC hits take 38 cycles, "
+        "and off-chip DRAM misses take 200 cycles. When an inclusive LLC set fills up, an eviction sends a hardware back-invalidation "
+        "to private caches. The resulting 160-to-200-cycle timing gap allows an unprivileged attacker to infer victim access patterns."
     )
 
     # =============================================================
-    # SLIDE 3: THREAT MODEL & ATTACK VECTORS
+    # SLIDE 3: THREAT MODEL & ATTACK TAXONOMY
     # =============================================================
     s3 = prs.slides.add_slide(blank_layout)
     set_slide_background(s3, COLOR_LIGHT_BG)
@@ -202,43 +193,45 @@ def generate_presentation():
         s3, Inches(0.8), Inches(1.6), Inches(3.6), Inches(5.2),
         "Prime + Probe Attack",
         [
+            "• NO shared memory required!",
             "1. Prime Phase: Attacker fills an LLC set with its own conflict lines.",
-            "2. Victim Runs: Victim accesses secret-dependent memory addresses.",
-            "3. Probe Phase: Attacker measures reload time of primed addresses.",
+            "2. Victim Runs: Secret-dependent lookup evicts an attacker line.",
+            "3. Probe Phase: Attacker measures reload time of primed lines.",
             "• High reload latency reveals victim used that specific set.",
-            "• Works across cores without shared memory!"
+            "• Extracts AES key bits across processes without shared pages."
         ]
     )
     add_card(
         s3, Inches(4.8), Inches(1.6), Inches(3.6), Inches(5.2),
         "Evict + Time Attack",
         [
+            "• NO shared memory required!",
             "1. Evict Phase: Attacker evicts a targeted candidate cache set.",
-            "2. Trigger Victim: Attacker triggers victim encryption.",
-            "3. Time Phase: Attacker times the entire victim execution.",
-            "• Increased overall victim runtime indicates victim accessed the evicted line.",
+            "2. Trigger Victim: Attacker triggers victim encryption execution.",
+            "3. Time Phase: Attacker times the entire victim runtime.",
+            "• Increased victim runtime indicates victim accessed the evicted line.",
             "• Directly exploits victim DRAM miss latency."
         ]
     )
     add_card(
         s3, Inches(8.8), Inches(1.6), Inches(3.7), Inches(5.2),
-        "Flush + Reload / Flush",
+        "Flush + Reload / Flush [6, 7]",
         [
-            "1. Shared Pages: Attacker and victim share libraries (e.g. OpenSSL).",
-            "2. CLFLUSH: Attacker invalidates line with unprivileged flush instruction.",
-            "3. Reload / Flush: Attacker reloads or re-flushes to measure timing.",
-            "• Cached line takes ~95 cyc to flush; uncached takes ~45 cyc.",
-            "• High resolution byte-level extraction."
+            "• REQUIRES shared memory pages (e.g. shared crypto libraries).",
+            "1. Shared Pages: Attacker and victim map the same shared library.",
+            "2. CLFLUSH: Attacker invalidates line with unprivileged flush.",
+            "3. Reload / Flush: Measures reload latency or clflush execution time.",
+            "• Cached line flushes in ~95 cyc; uncached flushes in ~45 cyc [7].",
+            "• Flush+Flush causes zero misses, evading anomaly detectors."
         ]
     )
     
     set_speaker_notes(
         s3,
-        "SPEAKER (Member 2 - Threat Model):\n"
-        "The paper addresses both conflict-based and flush-based attacks. In Prime+Probe, the attacker monitors set contention "
-        "without needing shared memory. In Evict+Time, the attacker measures the victim's overall execution delay. In Flush+Reload "
-        "and Flush+Flush, unprivileged flush instructions exploit shared memory pages. Existing defenses struggle because mitigating "
-        "conflict-based attacks usually doesn't stop flush attacks, and vice versa."
+        "SPEAKER (Member 2 - Attack Taxonomy):\n"
+        "The threat model encompasses two distinct attack classes. First, conflict-based attacks—Prime+Probe and Evict+Time—which do NOT "
+        "require shared memory; the attacker only needs to share LLC sets. Second, flush-based attacks—Flush+Reload and Flush+Flush—which "
+        "require shared memory pages. Existing defenses struggle because stopping set-conflicts does not stop flush attacks."
     )
 
     # =============================================================
@@ -250,24 +243,24 @@ def generate_presentation():
     
     add_card(
         s4, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
-        "Randomized Cache Mapping (CEASER, ScatterCache)",
+        "Randomized Cache Mapping (CEASER [2], ScatterCache [4])",
         [
-            "• Approach: Dynamic address-to-set remapping using crypto ciphers (e.g. Low-Latency block ciphers).",
-            "• Drawback 1: Extremely high address-translation logic and timing overhead on critical cache lookup path.",
-            "• Drawback 2: Vulnerable to advanced statistical eviction-set profiling and multi-round prime attacks.",
-            "• Drawback 3: Completely helpless against Flush+Reload and Flush+Flush attacks that do not rely on set conflicts."
+            "• Core Mechanism: Uses dynamic cryptographic ciphers (e.g. QARMA) to randomize the mapping from addresses to cache sets.",
+            "• Critical Drawback 1: Complex address encryption on the critical path increases cache access latency.",
+            "• Critical Drawback 2: Under sustained multi-round statistical profiling, attackers can still construct probabilistic eviction sets.",
+            "• Critical Drawback 3: Completely ineffective against Flush+Reload and Flush+Flush attacks that bypass set indexing."
         ],
         border_color=COLOR_ALERT
     )
     
     add_card(
         s4, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Strict Cache Partitioning (Intel CAT, DAWG)",
+        "Strict Cache Partitioning (Intel CAT, DAWG [1])",
         [
-            "• Approach: Hard partitioning of cache ways or sets among security domains / cores.",
-            "• Drawback 1: Severe capacity fragmentation and performance penalty (SPEC benchmark overhead 8% - 14%).",
-            "• Drawback 2: Requires operating system scheduler modifications and dynamic partition management.",
-            "• Drawback 3: Breaks transparent page sharing across domains (e.g., deduplicated shared libraries)."
+            "• Core Mechanism: Isolates cache ways or sets strictly between security domains or processor cores.",
+            "• Critical Drawback 1: Severe capacity fragmentation (SPEC benchmark overhead ranges from 4% to 14%).",
+            "• Critical Drawback 2: Requires operating system scheduler modifications and dynamic partition management.",
+            "• Critical Drawback 3: Intel CAT does not isolate shared memory pages; DAWG prevents shared page deduplication entirely."
         ],
         border_color=COLOR_ALERT
     )
@@ -275,9 +268,9 @@ def generate_presentation():
     set_speaker_notes(
         s4,
         "SPEAKER (Member 1 - Prior Work Limitations):\n"
-        "Why couldn't previous defenses solve this? Prior work tried to PREVENT evictions. Randomized mapping like CEASER "
-        "randomizes set mapping, but requires complex ciphers, adds latency, and doesn't stop flush attacks. Cache partitioning like "
-        "Intel CAT isolates ways, but wastes huge amounts of cache capacity, degrading performance by up to 14%, and requires OS changes."
+        "Prior work attempted to PREVENT evictions. Randomized mapping like CEASER adds encryption logic to the critical path and "
+        "remains susceptible to statistical eviction set profiling, while failing to stop flush attacks. Partitioning like Intel CAT and "
+        "DAWG causes 4 to 14% performance overhead due to cache fragmentation, requires OS changes, and restricts memory sharing."
     )
 
     # =============================================================
@@ -285,15 +278,15 @@ def generate_presentation():
     # =============================================================
     s5 = prs.slides.add_slide(blank_layout)
     set_slide_background(s5, COLOR_LIGHT_BG)
-    add_header(s5, "TreasureCache Core Idea: Hide Evictions, Don't Prevent Them")
+    add_header(s5, "TreasureCache Core Idea: Hide Evictions, Don't Prevent Them [1]")
     
     add_card(
         s5, Inches(0.8), Inches(1.6), Inches(11.7), Inches(2.3),
         "The Fundamental Paradigm Shift",
         [
-            "Traditional Philosophy: 'Spend high silicon complexity & performance overhead to prevent evictions.'",
-            "TreasureCache Philosophy: 'Allow LLC evictions to occur naturally as-is, but eliminate their side-channel utility by hiding exploitable evictions in a tiny buffer!'",
-            "Result: No address re-mapping, zero OS modifications, and near-zero (< 1.2%) performance degradation."
+            "• Traditional Approach: 'Spend high silicon complexity and performance overhead attempting to prevent evictions.'",
+            "• TreasureCache Philosophy: 'Allow LLC evictions to occur naturally as-is, but eliminate their side-channel utility by hiding exploitable evictions in a tiny buffer!' [1]",
+            "• Architectural Impact: Eliminates address remapping, requires zero OS modifications, and preserves benchmark performance (< 1.2% overhead / 0.03-0.28% IPC variation in gem5 [1])."
         ],
         border_color=COLOR_ACCENT
     )
@@ -302,8 +295,8 @@ def generate_presentation():
         s5, Inches(0.8), Inches(4.2), Inches(5.7), Inches(2.6),
         "1. Eviction-Hidden Buffer (EHB)",
         [
-            "• Small, indexed fully-associative buffer (e.g. 64 lines).",
-            "• Serves hits in ~40 cycles (equivalent to LLC hit latency).",
+            "• Parameterized buffer capacity (e.g. 8-64 KB in full scale; modeled as 64 entries / 4 KB).",
+            "• Serves hits in ~40 cycles (matches LLC hit latency).",
             "• Closes the timing gap between blocks in and out of LLC."
         ]
     )
@@ -311,7 +304,7 @@ def generate_presentation():
         s5, Inches(6.8), Inches(4.2), Inches(5.7), Inches(2.6),
         "2. Constant-Time Flush (CT-Flush)",
         [
-            "• Normalizes flush instruction latency to a flat ~70 cycles.",
+            "• Enforces a predefined waiting period (~70 cycles) even when target block is absent.",
             "• Cached and uncached lines take identical execution time.",
             "• Throttles Flush+Reload and Flush+Flush simultaneously."
         ]
@@ -320,10 +313,9 @@ def generate_presentation():
     set_speaker_notes(
         s5,
         "SPEAKER (Member 2 - TreasureCache Overview):\n"
-        "Here is TreasureCache's breakthrough idea: Stop trying to prevent evictions! Let evictions happen normally in the LLC, "
-        "but hide exploitable evictions in a specialized small buffer called the Eviction-Hidden Buffer (EHB). By matching the EHB hit "
-        "latency to the LLC hit latency (~40 cycles), an evicted block returns data just as fast as an LLC hit. And with Constant-Time Flush, "
-        "flush instructions take identical time whether a line was cached or not."
+        "Here is TreasureCache's breakthrough idea: Don't prevent evictions! Let evictions happen normally in the LLC, but hide exploitable "
+        "evictions in a specialized buffer called the Eviction-Hidden Buffer (EHB). By matching EHB latency to LLC hit latency (~40 cycles), "
+        "an evicted block returns data as fast as an LLC hit. And with Constant-Time Flush, flush instructions take a standardized waiting period."
     )
 
     # =============================================================
@@ -331,37 +323,37 @@ def generate_presentation():
     # =============================================================
     s6 = prs.slides.add_slide(blank_layout)
     set_slide_background(s6, COLOR_LIGHT_BG)
-    add_header(s6, "Eviction-Hidden Buffer (EHB) Architecture")
+    add_header(s6, "Eviction-Hidden Buffer (EHB) & Dual Placement Policy [1]")
     
     add_card(
         s6, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
         "Indexed Fully-Associative Structure",
         [
-            "• Why Fully-Associative? Direct-mapped or set-associative buffers suffer from internal set-conflicts that attackers can exploit.",
-            "• Fully-associative architecture maximizes storage utilization—a block is only replaced when all 64 slots are full.",
-            "• CAM Indexing Scheme: Maps physical address tags to buffered block slots for rapid single-cycle parallel tag comparison.",
-            "• Latency Match: Engineered to complete lookup and data return in 38-40 cycles, perfectly aligning with standard LLC bank hit timing."
+            "• Parameterized Sizing: Buffer capacity scales with core count and global threshold; not a fixed universal constant [1].",
+            "• Why Fully-Associative? Direct-mapped or set-associative buffers introduce internal set-conflicts that an attacker could exploit.",
+            "• Fully-associative architecture maximizes storage utilization—a block is replaced only when the buffer is completely full.",
+            "• Latency Matching: Serves buffered blocks in ~40 cycles (in gem5, LLC/EHB hits centered at ~24 cycles with a 2-cycle CAM lookup [1])."
         ]
     )
     
     add_card(
         s6, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Secure Placement Policy",
+        "Dual-Condition Secure Placement Policy",
         [
-            "• Problem: A 64-line buffer would rapidly overflow if every LLC eviction were placed inside it.",
-            "• Solution: TreasureCache only buffers EXPLOITABLE evictions.",
-            "• Inclusiveness Check: Because LLC is inclusive, an evicted block is only exploitable if it still has active copies in a core's private L1/L2 caches.",
-            "• If an evicted block has no private cache copies (benign LLC background churn), it is bypassed straight to DRAM.",
+            "To prevent the small buffer from overflowing, TreasureCache buffers an evicted LLC block if and only if [1]:",
+            "1. Condition 1 (Private Sharers): The evicted block has active copies resident in private L1/L2 caches (exploitable due to inclusiveness).",
+            "2. Condition 2 (EHB-Reload Replacement): The evicted block was replaced by a block loaded from the EHB.",
+            "• If neither condition is met, the block is ordinary background traffic and bypasses directly to DRAM.",
             "• This drastically filters buffer pollution while safeguarding all vulnerable victim lines."
         ]
     )
     
     set_speaker_notes(
         s6,
-        "SPEAKER (Member 3 - Architecture & Placement):\n"
-        "How can a tiny 64-line buffer protect a 2 MB cache? TreasureCache uses an Indexed Fully-Associative design to prevent "
-        "buffer set conflicts, and implements a Secure Placement Policy. It only captures 'exploitable evictions'—specifically blocks "
-        "that have active copies in private caches. Ordinary background churn bypasses the buffer straight to DRAM, keeping the buffer uncluttered."
+        "SPEAKER (Member 3 - Architecture & Dual Placement):\n"
+        "Slide 6 details the EHB architecture. The buffer is parameterized and fully-associative to eliminate internal set conflicts. "
+        "To prevent buffer overflow, TreasureCache enforces a dual-condition placement policy: it buffers an evicted block only if it has "
+        "active copies in private caches, or if it was replaced by a block loaded from EHB. Benign traffic bypasses directly to DRAM."
     )
 
     # =============================================================
@@ -369,16 +361,17 @@ def generate_presentation():
     # =============================================================
     s7 = prs.slides.add_slide(blank_layout)
     set_slide_background(s7, COLOR_LIGHT_BG)
-    add_header(s7, "Secure Replacement Policy and Constant-Time Flush")
+    add_header(s7, "Secure Replacement Policy & CT-Flush [1]")
     
     add_card(
         s7, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
-        "Secure Buffer Replacement Policy",
+        "Ownership-Based Secure Replacement Policy",
         [
-            "• Threat: An attacker could intentionally overflow the EHB to create a secondary side channel inside the buffer itself!",
-            "• Invalidation Prioritization: When the EHB is full, entries belonging to stale domains or unmonitored lines are evicted first.",
-            "• Non-Victim Replacement: An attacker generating memory accesses cannot force victim entries out of the EHB.",
-            "• LLC Reload Coherence: As soon as a buffered line is re-accessed and brought back into the LLC, it is cleanly removed from the EHB."
+            "• Threat: An attacker could intentionally flood the EHB to create a secondary side channel inside the buffer itself.",
+            "• Ownership Quotas: Each security domain is assigned a maximum capacity quota (Q = Capacity / N_domains) [1].",
+            "• Intra-Domain Replacement: When the buffer is full, incoming blocks can only displace blocks owned by the same domain, or unowned stale blocks.",
+            "• Attacker accesses in Domain 1 cannot displace victim blocks owned by Domain 0.",
+            "• LLC Reload Coherence: When a buffered line is re-accessed and brought back into LLC, it is cleanly removed from the EHB."
         ]
     )
     
@@ -386,10 +379,10 @@ def generate_presentation():
         s7, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
         "Constant-Time Flush (CT-Flush)",
         [
-            "• Threat: Flush+Flush exploits the fact that flushing an un-cached line takes ~45 cycles, while a cached line takes ~95 cycles.",
-            "• CT-Flush Execution: Modifies the micro-op execution of clflush so that both hits and misses execute in a normalized ~70 cycles.",
-            "• Security Impact: The timing difference drops from 50 cycles to ~1 cycle of random microarchitectural jitter.",
-            "• Allows shared libraries without disabling clflush or modifying operating system memory managers."
+            "• Threat: Flush+Flush exploits the fact that flushing an un-cached line takes ~45 cycles, while a cached line takes ~95 cycles [7].",
+            "• Predefined Waiting Period: CT-Flush enforces a predefined wait period (~70 cycles) even when the block is absent [1].",
+            "• Security Guarantee: Flushes take identical time regardless of cached state, closing the Flush+Flush channel.",
+            "• Allows shared read-only memory to remain enabled without OS or hypervisor modifications."
         ],
         border_color=COLOR_ACCENT
     )
@@ -397,9 +390,9 @@ def generate_presentation():
     set_speaker_notes(
         s7,
         "SPEAKER (Member 3 - Replacement & CT-Flush):\n"
-        "To prevent attackers from turning the EHB into a secondary side channel, the Secure Replacement Policy ensures attacker accesses "
-        "cannot arbitrarily displace victim blocks. Furthermore, Constant-Time Flush normalizes clflush latency to ~70 cycles, closing "
-        "the Flush+Flush side channel completely without disabling shared memory."
+        "Slide 7 covers secure replacement and CT-Flush. TreasureCache uses domain ownership quotas to prevent an attacker from evicting "
+        "victim blocks from the buffer. CT-Flush uses a predefined waiting period so that clflush executes in constant time even when "
+        "the block is absent, eliminating Flush+Flush side channels."
     )
 
     # =============================================================
@@ -407,37 +400,37 @@ def generate_presentation():
     # =============================================================
     s8 = prs.slides.add_slide(blank_layout)
     set_slide_background(s8, COLOR_LIGHT_BG)
-    add_header(s8, "Critical Assessment and Identified Research Gaps")
+    add_header(s8, "Critical Assessment: Established Limitations vs. Hypotheses")
     
     add_card(
         s8, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
-        "Identified Weaknesses & Assumptions",
+        "Established Limitations (Literature)",
         [
-            "1. Adversarial Buffer Thrashing: An active attacker running multi-threaded streaming eviction loops can generate heavy LLC churn, forcing the EHB into high turnover and premature displacement.",
-            "2. CAM Power & Area Scaling: Fully-associative CAM structures suffer from steep dynamic power scaling; deploying EHB across 64-core enterprise servers with multiple NUMA nodes poses thermal challenges.",
-            "3. Timing Jitter Residuals: CAM buffer access vs SRAM bank access might exhibit nanosecond electrical variations detectable via machine learning timing classifiers.",
-            "4. Non-Inclusive Caches: TreasureCache assumes inclusive LLC. Modern AMD Zen architectures use non-inclusive caches, requiring new placement heuristics."
-        ],
-        border_color=COLOR_ALERT
+            "1. CAM Power & Area Scaling: Fully-associative CAM structures consume high dynamic power; scaling to 64-core or multi-socket NUMA servers presents thermal challenges.",
+            "2. Non-Inclusive Caches: Modern processors (e.g. AMD Zen 3/4) use non-inclusive caches [3], where LLC evictions do not force L1/L2 back-invalidation.",
+            "3. Microarchitectural Timing Jitter: Subtle electrical differences between CAM buffers and SRAM banks could theoretically be profiled."
+        ]
     )
     
     add_card(
         s8, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Our Team's Key Research Questions",
+        "Team Research Hypothesis: Adversarial Churn",
         [
-            "• Question 1: How does TreasureCache perform when an attacker deliberately injects high-volume thrashing noise into the cache hierarchy?",
-            "• Question 2: Can we design an adaptive buffer replacement policy that resists adversarial thrashing without increasing buffer size?",
-            "• Question 3: How does TreasureCache compare quantitatively against unprotected LRU and way-partitioning baselines in a controlled simulator?"
-        ]
+            "• The Problem: The original paper's ownership quota protects against private evictions, but what happens during high-entropy shared churn?",
+            "• Attack Scenario: If an attacker accesses shared library pages (which qualify for EHB insertion) and causes rapid evictions, shared lines enter the EHB.",
+            "• Under standard FIFO/LRU within quotas, rapid shared churn prematurely displaces sensitive victim lines to DRAM.",
+            "• Reopening the Timing Gap: When the victim re-accesses displaced lines, it incurs a DRAM miss, leaking secrets!",
+            "• Motivation for Ada-EHB: We need frequency-aware retention scoring and burst rate-limiting."
+        ],
+        border_color=COLOR_ALERT
     )
     
     set_speaker_notes(
         s8,
         "SPEAKER (Member 4 - Critical Assessment):\n"
-        "While TreasureCache is innovative, our critical analysis identified key limitations. First, an attacker can launch adversarial "
-        "thrashing to saturate the small EHB. Second, scaling CAM structures to large multi-core processors consumes significant power. "
-        "Third, its reliance on inclusive cache back-invalidation doesn't generalize easily to non-inclusive architectures. This motivated "
-        "our proposed improvement: Ada-EHB."
+        "In Slide 8, we distinguish established paper limitations from our team's research hypothesis. The established limitations include "
+        "CAM power scaling and non-inclusive caches. Our research hypothesis investigates adversarial churn: if an attacker generates evictions "
+        "of shared library pages that qualify for the EHB, unweighted LRU can displace victim lines to DRAM. This motivated our proposed extension: Ada-EHB."
     )
 
     # =============================================================
@@ -445,80 +438,82 @@ def generate_presentation():
     # =============================================================
     s9 = prs.slides.add_slide(blank_layout)
     set_slide_background(s9, COLOR_LIGHT_BG)
-    add_header(s9, "Proposed Extension: Adaptive Frequency-Aware EHB (Ada-EHB)")
+    add_header(s9, "Proposed Improvement: Ada-EHB Formal Specification")
     
     add_card(
         s9, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
-        "Architectural Mechanisms of Ada-EHB",
+        "Mathematical Retention Score Function",
         [
-            "• Multi-Domain Contention Scoring: Cache lines experiencing cross-core contention between victim and attacker domains receive an elevated Sensitivity Score (Ws = 3.0).",
-            "• Dynamic Entropy Replacement Metric: Replacement candidate priority is evaluated dynamically:",
-            "       Priority(k) = Sensitivity(k) / ln(1 + Age(k))",
-            "• Sticky Residency: Victim cryptographic blocks remain locked in the buffer even during aggressive noise storms.",
-            "• Burst Rate-Limiting: Rapid streaming evictions from attacker loops are throttled from entering the buffer, preserving capacity for victim lines."
+            "Every buffered entry k is assigned a dynamic Retention Score:",
+            "       R(k) = [ S(k) * (1 + alpha * F(k)) ] / ln(1 + Age(k) + epsilon)",
+            "• S(k) = Sensitivity Weight (3.0 for sensitive/cross-domain, 1.0 for normal).",
+            "• F(k) = 4-Bit Saturating Frequency Counter (0 <= F(k) <= 15).",
+            "• alpha = Frequency weight factor (0.2); epsilon = 10^-5.",
+            "• Age(k) = Elapsed time (current_time - last_access_time).",
+            "• Replacement Rule: Evict entry with lowest score: k_evict = argmin R(k).",
+            "• Sticky Residency & Bypass: If incoming candidate has score <= min R(k) and is non-sensitive, it bypasses directly to DRAM."
         ],
         border_color=COLOR_ACCENT
     )
     
     add_card(
         s9, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Theoretical & Practical Justification",
+        "Token-Bucket Burst Rate-Limiting",
         [
-            "• Resilience Under Attack: Maintains buffer hit ratio > 85% under heavy adversarial thrashing (vs ~60% in standard EHB).",
-            "• Attacker Accuracy Throttled: Keeps Prime+Probe attacker accuracy at the random-guess floor (5.0% - 6.3%).",
-            "• Hardware Simplicity: Implemented with simple 4-bit saturation counters per slot and a comparator, requiring < 0.05% additional silicon area."
+            "• Token-Bucket Limiter per domain: M = 8 burst tokens.",
+            "• Refill Rate: 1 token every 125 CPU cycles (8 per 1000 cycles).",
+            "• Excess non-sensitive churn evictions bypass to DRAM, preventing buffer exhaustion.",
+            "• Hardware Metadata Overhead: 86 bits (~11 bytes) per entry. For 64 entries, total metadata is 704 bytes (~0.05% of LLC silicon area)."
         ]
     )
     
     set_speaker_notes(
         s9,
-        "SPEAKER (Member 4 - Proposed Improvement Ada-EHB):\n"
-        "To fix buffer thrashing, our team designed Ada-EHB: Adaptive Frequency-Aware Eviction-Hidden Buffer. Ada-EHB assigns dynamic "
-        "sensitivity scores to lines experiencing cross-domain contention and replaces lines using a priority function balanced by age. "
-        "Sensitive victim lines receive sticky residency, so an attacker's streaming noise cannot displace them. This keeps the buffer hit "
-        "ratio above 85% even under deliberate thrashing."
+        "SPEAKER (Member 4 - Ada-EHB Formal Design):\n"
+        "Slide 9 presents the formal mathematical specification of Ada-EHB. We define a Retention Score R(k) combining sensitivity weight S(k), "
+        "a 4-bit saturating frequency counter F(k), and an age denominator. When the buffer is full, we evict the entry with the minimum retention score. "
+        "A token-bucket rate limiter filters non-sensitive burst evictions, requiring only ~704 bytes of metadata for 64 entries."
     )
 
     # =============================================================
-    # SLIDE 10: SIMULATION & EXPERIMENTAL METHODOLOGY
+    # SLIDE 10: SIMULATION METHODOLOGY & FIDELITY
     # =============================================================
     s10 = prs.slides.add_slide(blank_layout)
     set_slide_background(s10, COLOR_LIGHT_BG)
-    add_header(s10, "Experimental Setup and Simulation Methodology")
+    add_header(s10, "Simulation Methodology and Architecture Fidelity")
     
     add_card(
         s10, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
-        "Cycle-Accurate Multi-Core Simulator",
+        "Cycle-Calibrated Multi-Core Simulator",
         [
-            "• Core 0 (Victim): Runs cryptographic workload performing table lookups (AES S-Box / 16 cache lines) indexed by plaintext ^ secret_key.",
-            "• Core 1 (Attacker): Co-located cross-core attacker mounting Prime+Probe and Evict+Time campaigns.",
-            "• Memory Hierarchy Modeled:",
-            "   - Private L1: 32 KB, 8-way, 4 cycles hit latency.",
-            "   - Private L2: 256 KB, 8-way, 12 cycles hit latency.",
-            "   - Shared Inclusive LLC: 2 MB, 16-way, 38 cycles hit latency.",
-            "   - DRAM Access: 200 cycles access latency."
+            "• Developed a modular Python cache architecture simulator (`simulation/`):",
+            "  - Private L1 D-Cache: 32 KB, 8-way (4 cycles hit latency).",
+            "  - Private L2 Cache: 256 KB, 8-way (12 cycles hit latency).",
+            "  - Shared Inclusive LLC: 2 MB, 16-way (38 cycles hit latency).",
+            "  - DRAM Access: 200 cycles latency.",
+            "• Models hardware inclusive back-invalidation on LLC evictions.",
+            "• Implements CT-Flush predefined waiting period (~70 cycles).",
+            "• Evaluates 4 modes: Unprotected LRU, Static Partitioning, TreasureCache, and Ada-EHB."
         ]
     )
     
     add_card(
         s10, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Comparative Evaluation Matrix",
+        "Cryptographic Workload & Multi-Trial Rigor",
         [
-            "We rigorously evaluated 4 distinct configurations across 300 rounds:",
-            "1. Unprotected (LRU): Standard inclusive cache without defenses.",
-            "2. Static Partitioning: Way-partitioning baseline (Intel CAT style).",
-            "3. TreasureCache (Standard): 64-entry EHB with CT-Flush.",
-            "4. Ada-EHB (Proposed): Sensitivity-aware adaptive replacement buffer under both clean and adversarial thrashing conditions.",
-            "• Metrics: Attacker Prediction Accuracy (%), Evict+Time Timing Gap (cycles), and Buffer Hit Ratio (%)."
+            "• Victim Cryptographic Workload: AES T-table lookup operations (16 cache lines / 1024 bytes) indexed by plaintext ^ secret_key.",
+            "• Attacker Campaign: Full Prime+Probe (16 sets) and Evict+Time.",
+            "• Statistical Rigor: 5 independent random seeds (101, 202, 303, 404, 505) with 300 rounds each.",
+            "• Metrics Reported: Mean and Standard Deviation for all attack success rates and timing gaps."
         ]
     )
     
     set_speaker_notes(
         s10,
         "SPEAKER (Member 3 - Simulation Methodology):\n"
-        "To validate these concepts, we built a modular, cycle-accurate multi-core cache simulator in Python. We simulated private L1 and L2 caches, "
-        "an inclusive 2 MB LLC, and DRAM latencies. We tested 4 configurations: Unprotected LRU, Static Partitioning, Standard TreasureCache, "
-        "and our Proposed Ada-EHB across 300 rounds of Prime+Probe and 200 rounds of Evict+Time."
+        "Slide 10 details our simulator. We model private L1/L2 caches, an inclusive 2 MB LLC, and DRAM latencies. "
+        "The victim executes AES table lookups while the attacker runs Prime+Probe across 16 sets. We evaluated all modes over 5 random seeds "
+        "with 300 rounds each to report statistical means and standard deviations."
     )
 
     # =============================================================
@@ -526,7 +521,7 @@ def generate_presentation():
     # =============================================================
     s11 = prs.slides.add_slide(blank_layout)
     set_slide_background(s11, COLOR_LIGHT_BG)
-    add_header(s11, "Experimental Results: Eliminating the Eviction Timing Gap")
+    add_header(s11, "Experimental Results: Closing the Timing Gap")
     
     fig1_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig1_latency_distribution.png')
     if os.path.exists(fig1_path):
@@ -534,16 +529,16 @@ def generate_presentation():
         
     add_card(
         s11, Inches(8.3), Inches(1.6), Inches(4.2), Inches(5.2),
-        "Key Findings (Latency)",
+        "Latency Findings (Simulation Model)",
         [
             "• Left Plot (Unprotected):",
-            "  - Cached accesses hit in ~38 cycles.",
-            "  - Evicted accesses drop to DRAM (~200 cycles).",
-            "  - Measurable 197.7-cycle timing gap enables trivial side-channel extraction.",
+            "  - LLC hits: ~38 cycles.",
+            "  - DRAM misses: ~200 cycles.",
+            "  - 197.8-cycle gap enables trivial key extraction.",
             "• Right Plot (TreasureCache):",
-            "  - Evicted accesses hit inside EHB in ~40 cycles.",
-            "  - Timing gap drops from 198 cycles to 1.0 cycle!",
-            "  - Completely indistinguishable from an LLC hit to an external observer."
+            "  - Evicted accesses hit in EHB in ~40 cycles.",
+            "  - Evict+Time timing gap drops to 1.17 +/- 0.02 cycles!",
+            "  - Completely indistinguishable from an LLC hit."
         ],
         border_color=COLOR_ACCENT
     )
@@ -551,9 +546,8 @@ def generate_presentation():
     set_speaker_notes(
         s11,
         "SPEAKER (Member 3 - Latency Results):\n"
-        "Slide 11 shows our simulation results for access latency distributions. On the left, unprotected cache shows a massive 198-cycle "
-        "timing gap between hits and DRAM misses. On the right, TreasureCache eliminates this timing gap by serving evicted accesses "
-        "from the EHB at ~40 cycles. The timing gap drops to 1.0 cycle, completely closing the timing channel."
+        "Slide 11 shows our simulation latency distributions. On the left, unprotected cache shows a 197.8-cycle timing gap between hits and misses. "
+        "On the right, TreasureCache eliminates this gap by serving evicted accesses via the EHB at ~40 cycles, collapsing the timing gap to 1.17 cycles."
     )
 
     # =============================================================
@@ -561,7 +555,7 @@ def generate_presentation():
     # =============================================================
     s12 = prs.slides.add_slide(blank_layout)
     set_slide_background(s12, COLOR_LIGHT_BG)
-    add_header(s12, "Experimental Results: Attacker Accuracy and Buffer Scaling")
+    add_header(s12, "Results: Attacker Accuracy & Buffer Scaling Under Thrashing")
     
     fig2_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig2_attack_success_rate.png')
     fig3_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig3_performance_tradeoff.png')
@@ -574,9 +568,10 @@ def generate_presentation():
     set_speaker_notes(
         s12,
         "SPEAKER (Member 4 - Accuracy & Scaling Results):\n"
-        "On Slide 12, the left graph shows Prime+Probe attacker accuracy. In the unprotected baseline, the attacker recovers the secret with "
-        "100% accuracy. Both TreasureCache and Ada-EHB reduce attacker accuracy to around 5-6%, matching the theoretical random-guess baseline of 6.25%. "
-        "The right graph shows buffer scaling: our proposed Ada-EHB maintains significantly higher hit ratios across all buffer capacities."
+        "Slide 12 presents our security and capacity results. On the left (Figure 2), Prime+Probe attacker accuracy drops from 100% in unprotected "
+        "cache down to 6.27% +/- 0.83% in partitioned and 6.27% +/- 1.48% in Ada-EHB, matching the expected random-guess baseline of 6.25% (1/16 sets). "
+        "On the right (Figure 3), under heavy adversarial churn, standard TreasureCache drops to 0% hit ratio at 16/32 lines and 66.7% at 64 lines, "
+        "whereas Ada-EHB retains 100% hit ratio down to 32 lines and 62.5% at 16 lines."
     )
 
     # =============================================================
@@ -588,47 +583,47 @@ def generate_presentation():
     
     add_card(
         s13, Inches(0.8), Inches(1.6), Inches(5.6), Inches(2.5),
-        "Student A (Lead Architecture Analyst)",
+        "Kontham Sripadha (Lead Simulation Engineer)",
         [
-            "• Research of inclusive LLC hierarchy & back-invalidation mechanisms.",
-            "• Survey of prior randomized mapping (CEASER) and partitioning (CAT) defenses.",
-            "• Analysis of EHB hardware indexing scheme and system model."
+            "• Implemented multi-core cache hierarchy simulator (`cache_model.py`, `attacks.py`).",
+            "• Built automated benchmarking suite with 5 random seeds (`run_experiments.py`).",
+            "• Generated publication-quality figures with error bars."
         ]
     )
     add_card(
         s13, Inches(6.8), Inches(1.6), Inches(5.7), Inches(2.5),
-        "Student B (Security & Threat Analyst)",
+        "Team Member 2 (Security & Threat Analyst)",
         [
-            "• Formulation of cross-core threat model & cryptographic attack analysis.",
-            "• Deep dive into Flush+Flush, Flush+Reload, and Prime+Probe attack dynamics.",
-            "• Evaluation of Constant-Time Flush (CT-Flush) security."
+            "• Formulated cross-core threat model & cryptographic attack analysis.",
+            "• Detailed evaluation of Flush+Flush, Flush+Reload, and Prime+Probe vectors.",
+            "• Assessed Constant-Time Flush (CT-Flush) waiting period mechanics."
         ]
     )
     add_card(
         s13, Inches(0.8), Inches(4.3), Inches(5.6), Inches(2.5),
-        "Student C (Simulation & Systems Engineer)",
+        "Team Member 3 (Architecture Analyst)",
         [
-            "• Implementation of modular multi-core cache architecture simulator.",
-            "• Construction of Prime+Probe and Evict+Time attack harnesses.",
-            "• Automation of benchmarking suite and generation of quantitative figures."
+            "• Evaluated inclusive cache back-invalidation invariants.",
+            "• Comparative survey of prior randomized mapping (CEASER) & partitioning (CAT) defenses.",
+            "• Reviewed gem5 SPEC CPU2017 benchmark results and storage overhead."
         ]
     )
     add_card(
         s13, Inches(6.8), Inches(4.3), Inches(5.7), Inches(2.5),
-        "Student D (Extension & Documentation Specialist)",
+        "Team Member 4 (Extension & Documentation Lead)",
         [
-            "• Conceptualization & algorithmic modeling of Ada-EHB extension.",
-            "• Evaluation of buffer thrashing limits & sensitivity replacement policy.",
-            "• Compilation of comprehensive technical documentation & presentation deck."
+            "• Conceptualized and mathematically formulated Ada-EHB retention scoring.",
+            "• Designed token-bucket burst rate-limiting algorithm and pseudocode.",
+            "• Compiled comprehensive technical documentation and presentation deck."
         ]
     )
     
     set_speaker_notes(
         s13,
         "SPEAKER (All Members - Transition Segment):\n"
-        "Here is the breakdown of our team's individual contributions. Student A led architectural analysis of LLC inclusiveness; "
-        "Student B analyzed threat models and CT-Flush mechanics; Student C developed the multi-core cache simulator and experimental pipeline; "
-        "and Student D designed the Ada-EHB extension and compiled the technical report."
+        "Slide 13 details our individual contributions. Kontham Sripadha served as Lead Simulation Engineer, implementing the cache simulator "
+        "and benchmark pipeline; Member 2 led threat modeling and CT-Flush analysis; Member 3 analyzed prior defenses and gem5 results; "
+        "and Member 4 formulated the Ada-EHB retention score algorithm and compiled documentation."
     )
 
     # =============================================================
@@ -658,17 +653,17 @@ def generate_presentation():
     p_concl_title.space_after = Pt(16)
     
     takeaways = [
-        "1. Paradigm Shift: TreasureCache proves that hiding evictions in a tiny buffer (EHB) is vastly more efficient than preventing evictions with complex address mapping.",
-        "2. Negligible Overhead: Demonstrates < 1.2% performance impact while providing complete defense against Prime+Probe, Evict+Time, and Flush+Reload.",
-        "3. Critical Vulnerability Identified: Unprotected EHB can suffer buffer thrashing under adversarial memory streaming attacks.",
-        "4. Ada-EHB Extension Validated: Our proposed sensitivity-aware replacement preserves victim security buffers even under heavy adversarial thrashing.",
-        "5. Future Work: Extending eviction-hiding principles to non-inclusive cache hierarchies and multi-socket NUMA systems."
+        "1. Paradigm Shift: TreasureCache [1] proves that hiding evictions in a tiny buffer (EHB) is far more efficient than preventing evictions with complex address mapping.",
+        "2. Negligible Overhead: Demonstrates < 1.2% overhead in gem5 while providing complete defense against Prime+Probe, Evict+Time, and Flush+Reload.",
+        "3. Critical Vulnerability Identified: Standard TreasureCache experiences buffer thrashing under adversarial shared memory churn.",
+        "4. Ada-EHB Extension Validated: Our proposed sensitivity scoring and burst rate-limiting preserve 100% buffer hit ratio down to 32 lines and 62.5% at 16 lines.",
+        "5. Future Work: Adapting eviction-hiding principles to non-inclusive cache topologies and multi-socket NUMA systems."
     ]
     for t in takeaways:
         p_t = tf14.add_paragraph()
         p_t.text = t
         p_t.font.name = "Calibri"
-        p_t.font.size = Pt(14)
+        p_t.font.size = Pt(13.5)
         p_t.font.color.rgb = RGBColor(230, 238, 248)
         p_t.space_after = Pt(8)
         
@@ -677,10 +672,39 @@ def generate_presentation():
         "SPEAKER (Lead / Conclusion):\n"
         "In conclusion, TreasureCache successfully demonstrates that hiding cache evictions is far superior to preventing them. "
         "Our analysis verified its security claims while revealing a critical thrashing vulnerability, which our Ada-EHB extension "
-        "effectively mitigates. Thank you for your time, and we are now open for any questions."
+        "effectively mitigates. Thank you for your time, and we now invite your questions!"
     )
 
-    # Save presentation
+    # =============================================================
+    # SLIDE 15: REFERENCES SLIDE
+    # =============================================================
+    s15 = prs.slides.add_slide(blank_layout)
+    set_slide_background(s15, COLOR_LIGHT_BG)
+    add_header(s15, "References & Academic Citations", "DOCUMENTATION & ATTRIBUTION")
+    
+    refs_items = [
+        "[1] M. Li, K. Bu, C. Miao, and K. Ren, \"TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks,\" IEEE Transactions on Dependable and Secure Computing, vol. 21, no. 5, pp. 4574-4588, Sept.-Oct. 2024.",
+        "[2] M. K. Qureshi, \"CEASER: Mitigating Conflict-Based Cache Attacks via Encrypted-Address and Random-Remapping,\" in Proc. 51st Annual IEEE/ACM MICRO, 2018, pp. 775-787.",
+        "[3] M. Yan, R. Sprabery, B. Gopireddy, C. Fletcher, R. Campbell, and J. Torrellas, \"Attack Directories, Not Caches: Side Channel Attacks in a Non-Inclusive World,\" in Proc. IEEE S&P, 2019.",
+        "[4] G. Saileshwar and M. K. Qureshi, \"MIRAGE: Mitigating Conflict-Based Cache Attacks with a Practical Fully-Associative Design,\" in Proc. USENIX Security, 2021.",
+        "[5] N. Fang, M. A. Kabir, and D. Tiwari, \"PhantomCache: Obfuscating Cache Set Mapping Against Side-Channel Attacks,\" in Proc. IEEE HPCA, 2020.",
+        "[6] Y. Yarom and K. Falkner, \"FLUSH+RELOAD: A High Resolution, Low Noise, L3 Cache Side-Channel Attack,\" in Proc. 23rd USENIX Security Symposium, 2014.",
+        "[7] D. Gruss, C. Maurice, K. Wagner, and S. Mangard, \"Flush+Flush: A Fast and Stealthy Cache Attack,\" in Proc. 13th DIMVA, 2016.",
+        "[8] M. Yan, J. Choi, D. Skarlatos, A. Morrison, E. Torrellas, and J. Torrellas, \"SHARP: Mitigating Cache-Based Side-Channel Attacks in Inclusive Caches,\" IEEE TC, 2019."
+    ]
+    add_card(
+        s15, Inches(0.8), Inches(1.6), Inches(11.7), Inches(5.2),
+        "Key Literature Cited in Analysis",
+        refs_items
+    )
+    
+    set_speaker_notes(
+        s15,
+        "SPEAKER (Lead):\n"
+        "Here are the formal academic citations referenced throughout our analysis and presentation, including the original TreasureCache IEEE TDSC paper "
+        "and foundational prior works across cache side-channel attacks and defense architectures."
+    )
+
     ppt_out_path = os.path.join(os.path.dirname(__file__), "TreasureCache_Presentation.pptx")
     prs.save(ppt_out_path)
     print(f"\n[Generated Presentation] {ppt_out_path}")
@@ -689,4 +713,3 @@ def generate_presentation():
 
 if __name__ == '__main__':
     generate_presentation()
-

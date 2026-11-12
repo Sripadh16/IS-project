@@ -1,34 +1,134 @@
 {
+    "simulation_parameters": {
+        "l1_hit_latency_cycles": 4,
+        "l2_hit_latency_cycles": 12,
+        "llc_hit_latency_cycles": 38,
+        "ehb_hit_latency_cycles": 40,
+        "dram_latency_cycles": 200,
+        "ct_flush_latency_cycles": 70,
+        "random_guess_expectation_percent": 6.25,
+        "num_seeds": 5,
+        "seeds": [
+            101,
+            202,
+            303,
+            404,
+            505
+        ],
+        "rounds_per_seed": 300
+    },
     "prime_and_probe": {
-        "unprotected_accuracy": 1.0,
-        "partitioned_accuracy": 0.06666666666666667,
-        "treasure_cache_clean_accuracy": 0.06,
-        "treasure_cache_thrashed_accuracy": 0.043333333333333335,
-        "ada_ehb_thrashed_accuracy": 0.05,
-        "random_guess_baseline": 0.0625
+        "unprotected": {
+            "mean": 100.0,
+            "std": 0.0,
+            "samples": [
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0
+            ]
+        },
+        "partitioned": {
+            "mean": 6.27,
+            "std": 0.83,
+            "samples": [
+                6.0,
+                5.33,
+                5.67,
+                6.67,
+                7.67
+            ]
+        },
+        "treasure_cache_clean": {
+            "mean": 11.2,
+            "std": 0.72,
+            "samples": [
+                10.33,
+                11.67,
+                10.67,
+                12.33,
+                11.0
+            ]
+        },
+        "treasure_cache_thrashed": {
+            "mean": 6.27,
+            "std": 1.48,
+            "samples": [
+                4.0,
+                6.0,
+                5.67,
+                8.33,
+                7.33
+            ]
+        },
+        "ada_ehb_thrashed": {
+            "mean": 6.27,
+            "std": 1.48,
+            "samples": [
+                4.0,
+                6.0,
+                5.67,
+                8.33,
+                7.33
+            ]
+        }
     },
     "evict_and_time": {
-        "unprotected_gap_cycles": 197.695,
-        "partitioned_gap_cycles": 1.005,
-        "treasure_cache_gap_cycles": 1.0199999999999996,
-        "ada_ehb_gap_cycles": 0.9900000000000002
+        "unprotected": {
+            "mean_gap": 197.8,
+            "std_gap": 0.24
+        },
+        "partitioned": {
+            "mean_gap": 0.99,
+            "std_gap": 0.01
+        },
+        "treasure_cache": {
+            "mean_gap": 1.17,
+            "std_gap": 0.02
+        },
+        "ada_ehb": {
+            "mean_gap": 1.17,
+            "std_gap": 0.02
+        }
     },
     "capacity_study": {
-        "capacities": [
+        "capacities_lines": [
             16,
             32,
             64,
             128,
             256
         ],
-        "tc_hit_ratios": [
+        "capacities_kb": [
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0
+        ],
+        "tc_hit_ratios_mean": [
+            0.0,
+            0.0,
+            66.7,
+            100.0,
+            100.0
+        ],
+        "tc_hit_ratios_std": [
             0.0,
             0.0,
             0.0,
             0.0,
             0.0
         ],
-        "ada_hit_ratios": [
+        "ada_hit_ratios_mean": [
+            62.5,
+            100.0,
+            100.0,
+            100.0,
+            100.0
+        ],
+        "ada_hit_ratios_std": [
             0.0,
             0.0,
             0.0,

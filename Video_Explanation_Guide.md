@@ -1,16 +1,16 @@
 # Video Explanation Guide & Presentation Script
 **Course Project Deliverable 4: Research Paper Analysis Presentation**
-*Paper: "TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks" (IEEE TDSC 2024)*
+*Paper: "TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks" (IEEE TDSC 2024 [1])*
 
 ---
 
 ## 1. Recording Setup & Submission Checklist
 According to `IS_ResearchAnalysis_Instructions.pdf` (Rubric Items 4, 6, & 8):
-- [ ] **Recording Tool**: Use Zoom, OBS Studio, Microsoft Teams, or Google Meet.
-- [ ] **Face Visibility**: Each team member's face and name must be clearly visible on screen (webcam overlay) while speaking.
-- [ ] **Visual Aids**: Share the PowerPoint presentation (`TreasureCache_Presentation.pptx`) and share VS Code / terminal running the simulation code (`simulation/run_experiments.py`).
-- [ ] **Individual Defense**: Every team member must speak and explain their assigned section.
-- [ ] **Target Duration**: Approximately 12 to 16 minutes total (~3-4 minutes per member).
+- [ ] **Recording Application**: Zoom, OBS Studio, Microsoft Teams, or Google Meet.
+- [ ] **Face Visibility**: Each team member's face and full name must be clearly visible on screen (webcam overlay) while speaking.
+- [ ] **Visual Media**: Share the 15-slide PowerPoint deck (`TreasureCache_Presentation.pptx`) and share VS Code / Terminal demonstrating live simulation execution (`python simulation/run_experiments.py`).
+- [ ] **Individual Contribution Defense**: Every team member must speak and explain their assigned section.
+- [ ] **Target Duration**: Approximately 12 to 16 minutes total (~3 to 4 minutes per member).
 
 ---
 
@@ -18,143 +18,134 @@ According to `IS_ResearchAnalysis_Instructions.pdf` (Rubric Items 4, 6, & 8):
 
 | Member | Assigned Role | Slides / Scope Covered | Estimated Time |
 | :--- | :--- | :--- | :--- |
-| **Student A** | Lead Architecture Analyst | Slides 1–2, 4 (Motivation, Inclusive LLC, Prior Work) | 3:30 mins |
-| **Student B** | Security & Threat Analyst | Slides 3, 5, 7 (Threat Model, P+P, CT-Flush) | 3:30 mins |
-| **Student C** | Simulation & Systems Engineer | Slides 6, 10–12 + Live Code Walkthrough (`simulation/`) | 4:30 mins |
-| **Student D** | Extension & Documentation Specialist | Slides 8, 9, 13–14 (Gaps, Ada-EHB, Conclusions) | 3:30 mins |
+| **Kontham Sripadha** | Lead Analyst & Simulation Engineer | Slides 1–2, 10–12 + Live Code Walkthrough (`simulation/`) | 4:30 mins |
+| **Team Member 2** | Security & Threat Analyst | Slides 3, 5, 7 (Threat Model, P+P, CT-Flush Waiting Period) | 3:30 mins |
+| **Team Member 3** | Architecture Analyst | Slides 4, 6, 11 (Prior Defenses, Dual Placement Policy, Timing Gap) | 3:30 mins |
+| **Team Member 4** | Extension & Documentation Lead | Slides 8, 9, 13–15 (Gaps, Ada-EHB Formal Model, Conclusion, Refs) | 4:00 mins |
 
 ---
 
 ## 3. Slide-by-Slide Speaker Script
 
-### [Slide 1: Title Slide] — *Student A*
+### [Slide 1: Title Slide] — *Kontham Sripadha*
 > **Spoken Script**:
-> "Hello everyone, and welcome. Today our team is presenting our research analysis, critical evaluation, and experimental implementation of the paper **'TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks'**, published in IEEE Transactions on Dependable and Secure Computing in 2024 by Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren.
-> In this presentation, we will walk you through the core microarchitectural problem of shared-cache side channels, break down why existing defenses like randomized mapping and way-partitioning fall short, explore TreasureCache's novel paradigm of hiding evictions rather than preventing them, discuss our critical assessment and identified research gaps, and present our own cycle-accurate simulator and proposed architectural extension, Ada-EHB."
+> "Hello everyone, and welcome. Today our team is presenting our comprehensive research analysis, architectural assessment, and experimental validation of the paper **'TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks'**, published in IEEE Transactions on Dependable and Secure Computing in 2024 by Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren.
+> In this presentation, we will examine the root microarchitectural problem of cross-core cache timing channels, evaluate why prior randomized mapping and partitioning defenses incur prohibitive trade-offs, break down TreasureCache's novel philosophy of hiding evictions rather than preventing them, discuss our critical assessment of adversarial buffer thrashing, and demonstrate our independent contribution: Ada-EHB, an adaptive frequency-aware eviction buffer verified through a cycle-calibrated multi-core simulator."
 
 ---
 
-### [Slide 2: Shared Inclusive LLC Timing Channels] — *Student A*
+### [Slide 2: Memory Hierarchy Timing Disparities] — *Kontham Sripadha*
 > **Spoken Script**:
-> "Let us start with the root architectural problem. In modern multi-core processors, cores share a large Last-Level Cache (LLC) to maximize throughput. To maintain cache coherence, most x86 and ARM processors enforce cache inclusiveness—meaning any cache line present in private L1 or L2 caches must also be resident in the shared LLC.
-> The vulnerability arises when an LLC set becomes full: an eviction in the LLC immediately triggers a hardware back-invalidation signal that forcibly ejects that line from private L1 and L2 caches as well.
-> Because an LLC cache hit takes about 38 to 40 cycles, while a main memory DRAM access takes over 200 cycles, there is an unmistakable 160-to-200-cycle timing gap. An unprivileged attacker running on a neighboring core can intentionally monitor this timing disparity using high-resolution cycle counters like `rdtsc` to extract sensitive cryptographic keys from AES, RSA, or secure enclaves."
+> "Let us examine the root hardware problem. Modern processors implement multi-level cache hierarchies with fast private L1 and L2 caches, and a large shared Last-Level Cache (LLC) connected to main memory DRAM. In x86 and ARM processors, the LLC is inclusive: any line in private caches must also reside in the shared LLC.
+> Notice the distinct latency tiers in our modeled architecture: private L1 hits take 4 cycles, private L2 hits take 12 cycles, shared LLC hits take 38 cycles, while DRAM misses take ~200 cycles.
+> When an inclusive LLC set fills up, an eviction triggers hardware back-invalidation into private L1 and L2 caches. This creates an unmistakable 160-to-200-cycle timing disparity. An unprivileged attacker sharing the LLC can monitor this timing gap using cycle counters like `rdtsc` to infer secret cryptographic memory lookups during AES, RSA, or SGX enclave execution."
 
 ---
 
-### [Slide 3: Threat Model and Attack Taxonomy] — *Student B*
+### [Slide 3: Threat Model and Attack Taxonomy] — *Team Member 2*
 > **Spoken Script**:
-> "Thank you, Student A. Now, looking at the threat model: the attacker and victim share physical hardware but run in separate security domains without special privileges. Cache eviction attacks fundamentally fall into two main categories:
-> First, conflict-based attacks—specifically **Prime+Probe** and **Evict+Time**. In Prime+Probe, the attacker fills target LLC sets with its own addresses. When the victim executes a secret-dependent lookup—such as an AES S-Box table lookup—it evicts an attacker line. When the attacker probes those sets, any delayed set reveals the exact cache set the victim accessed. Evict+Time works similarly by evicting a set and measuring the victim's total execution time.
-> Second, flush-based attacks—such as **Flush+Reload** and **Flush+Flush**—which exploit shared memory pages (like OpenSSL libraries). The attacker uses the unprivileged `clflush` instruction to invalidate lines. In Flush+Flush, the attacker even exploits the execution timing of `clflush` itself, which executes faster on uncached lines than on cached lines."
+> "Thank you, Sripadha. Looking at the threat model: the attacker and victim share physical hardware but run in distinct security domains without administrative privileges. Cache eviction attacks fall into two distinct classes:
+> First, conflict-based attacks—specifically **Prime+Probe** and **Evict+Time**. These attacks do NOT require shared memory. In Prime+Probe, the attacker fills target LLC sets with conflict lines. When the victim executes an AES lookup, it evicts an attacker line into DRAM. When the attacker probes the sets, any set with delayed reload latency reveals the secret memory index. Evict+Time works similarly by evicting a set and measuring overall victim execution runtime.
+> Second, flush-based attacks—such as **Flush+Reload** and **Flush+Flush**—which DO require shared memory pages (e.g., shared OpenSSL libraries). The attacker executes `clflush` to invalidate shared lines. In Flush+Flush, the attacker exploits the execution time of `clflush` itself, which completes in ~45 cycles on uncached lines versus ~95 cycles on cached lines, generating zero cache misses."
 
 ---
 
-### [Slide 4: Why Existing Defenses Fall Short] — *Student A*
+### [Slide 4: Why Existing Defenses Fall Short] — *Team Member 3*
 > **Spoken Script**:
-> "Prior defenses attempted to mitigate these attacks by PREVENTING evictions, but they incurred heavy penalties.
-> For example, randomized mapping techniques like CEASER and ScatterCache use cryptographic ciphers to dynamically randomize the mapping from addresses to cache sets. However, this introduces high latency onto the critical memory lookup path, and attackers have demonstrated that statistical profiling over multiple rounds can still reconstruct eviction sets.
-> On the other hand, strict cache partitioning—such as Intel CAT or DAWG—physically splits cache ways among cores. This causes severe capacity fragmentation, degrading general benchmark performance by 8 to 14 percent, requires OS modifications, and prevents transparent shared libraries. This dilemma motivated the authors to rethink the entire defense philosophy."
+> "Prior defenses attempted to mitigate these attacks by PREVENTING evictions, but incurred severe penalties.
+> Randomized mapping schemes like CEASER and ScatterCache use cryptographic ciphers to dynamically randomize the mapping from addresses to cache sets. However, this places encryption logic directly on the critical memory lookup path, and attackers have demonstrated that statistical profiling over multiple rounds can still reconstruct eviction sets. Furthermore, randomized mapping does not protect against flush attacks.
+> On the other hand, strict cache partitioning—such as Intel CAT or DAWG—physically splits cache ways among cores. This causes severe capacity fragmentation, degrading general benchmark performance by 4 to 14 percent, requires OS scheduler modifications, and prevents shared library deduplication. This motivated TreasureCache's new approach."
 
 ---
 
-### [Slide 5: The TreasureCache Paradigm] — *Student B*
+### [Slide 5: The TreasureCache Paradigm] — *Team Member 2*
 > **Spoken Script**:
-> "This brings us to TreasureCache's central paradigm shift: **'Don't spend massive hardware complexity trying to prevent evictions; instead, allow LLC evictions to occur naturally, but transparently hide exploitable evictions in a tiny buffer!'**
+> "This brings us to TreasureCache's central paradigm shift: **'Allow LLC evictions to occur naturally as-is, but eliminate their side-channel utility by hiding exploitable evictions in a tiny buffer!'**
 > TreasureCache introduces two tightly integrated mechanisms:
-> First, the **Eviction-Hidden Buffer (EHB)**, a small fully-associative buffer that catches exploitable evictions and serves hits at ~40 cycles—matching LLC hit latency.
-> Second, **Constant-Time Flush (CT-Flush)**, which normalizes the execution time of flush instructions to a flat 70 cycles, completely neutralizing Flush+Flush and Flush+Reload.
-> Together, these mechanisms require zero OS changes, no compiler rewrites, and maintain normal hardware performance with under 1.2% average overhead."
+> First, the **Eviction-Hidden Buffer (EHB)**, a specialized fully-associative buffer that captures exploitable evictions and serves hits at ~40 cycles—matching LLC hit latency.
+> Second, **Constant-Time Flush (CT-Flush)**, which enforces a predefined waiting period (~70 cycles) even when the requested line is absent.
+> Together, these mechanisms require zero OS modifications, no compiler changes, and preserve benchmark performance with under 1.2% overhead in gem5 simulations."
 
 ---
 
-### [Slide 6: Eviction-Hidden Buffer (EHB) Architecture] — *Student C*
+### [Slide 6: EHB Architecture & Dual-Condition Placement] — *Team Member 3*
 > **Spoken Script**:
-> "Let's examine how the EHB operates in hardware. The EHB uses an **Indexed Fully-Associative** architecture. A fully-associative structure is essential because set-associative or direct-mapped buffers would introduce internal set-conflicts that an attacker could exploit.
-> To prevent a small 64-line buffer from overflowing, TreasureCache uses a **Secure Placement Policy**. Instead of buffering all LLC evictions, it checks cache inclusiveness: it only buffers blocks that have active copies in private L1 or L2 caches. If an evicted block was only resident in the LLC without private cache copies, it is ordinary background traffic and bypasses directly to DRAM.
-> When a victim later accesses a block that was evicted from LLC, the lookup hits in the EHB in ~40 cycles, completely concealing the eviction from the attacker."
+> "Slide 6 breaks down the EHB architecture. The buffer capacity is parameterized by the core count and global threshold—modeled as 64 entries (4 KB) in our 2-core setup. An Indexed Fully-Associative architecture is essential to prevent internal set conflicts that an adversary could exploit.
+> To prevent a small buffer from overflowing, TreasureCache enforces a dual-condition Secure Placement Policy:
+> Condition 1: The evicted block has active copies resident in private L1/L2 caches.
+> Condition 2: The evicted block was replaced by a block loaded from the EHB.
+> If neither condition is met, the block represents benign background cache churn and bypasses directly to DRAM."
 
 ---
 
-### [Slide 7: Secure Replacement & CT-Flush] — *Student B*
+### [Slide 7: Secure Replacement Policy & CT-Flush] — *Team Member 2*
 > **Spoken Script**:
-> "To prevent an attacker from manipulating the buffer itself, TreasureCache implements a **Secure Replacement Policy**. If the EHB fills up, non-victim lines and stale entries are replaced first, preventing an attacker from intentionally knocking victim lines out of the buffer to create a secondary side channel.
-> Furthermore, with **CT-Flush**, the processor pipeline executes flush operations in constant time (~70 cycles) regardless of whether the line was resident in cache or dirty. This closes the timing gap that Flush+Flush relies on, allowing shared read-only memory to remain enabled safely."
+> "To prevent an attacker from manipulating the buffer itself, TreasureCache implements an ownership-based Secure Replacement Policy. Each security domain is allocated an ownership quota ($Q = \text{Capacity} / N_{\text{domains}}$). Incoming blocks can only displace blocks belonging to the same domain or unowned stale blocks, preventing an attacker from evicting victim lines.
+> Furthermore, with CT-Flush, the processor pipeline executes flush operations in constant time using a predefined waiting period (~70 cycles) regardless of cached state. This closes the timing gap that Flush+Flush relies on, allowing shared read-only memory to remain enabled safely."
 
 ---
 
-### [Slide 8: Critical Assessment & Identified Gaps] — *Student D*
+### [Slide 8: Critical Assessment — Established Limitations vs. Hypotheses] — *Team Member 4*
 > **Spoken Script**:
-> "Now, turning to our team's critical evaluation of the paper: while TreasureCache is an impressive architectural achievement, our deep dive identified several unresolved vulnerabilities and restrictive assumptions:
-> 1. **Vulnerability to Adversarial Thrashing**: The 64-line buffer is finite. If an attacker runs aggressive memory-streaming loops across multiple cores, they can induce heavy LLC turnover. Under intense pressure, victim lines can be prematurely evicted from the EHB before the victim can reuse them, exposing the DRAM latency gap once again.
-> 2. **CAM Scalability and Power Overhead**: Fully-associative CAM structures consume significant dynamic power. Scaling this buffer to 64-core or multi-socket NUMA servers presents thermal and silicon budget challenges.
-> 3. **Non-Inclusive Caches**: Modern architectures like AMD Zen utilize non-inclusive cache hierarchies, where LLC evictions do not force private cache invalidations. TreasureCache's placement policy does not directly translate to such designs."
+> "Now, turning to our team's critical evaluation of the paper: we distinguish between established limitations in published literature and our team's independent research hypothesis.
+> The established limitations include CAM dynamic power scaling in multi-core servers, and non-inclusive cache topologies like AMD Zen where LLC evictions do not force private cache invalidations.
+> Our team's research hypothesis investigates adversarial shared churn: while the original paper's ownership quota protects against private evictions, what happens when an attacker accesses shared library pages that qualify for the EHB? Under standard unweighted LRU within quotas, rapid shared churn forces premature displacement of sensitive victim lines to DRAM. When the victim re-accesses these displaced lines, it incurs a DRAM miss, reopening the side-channel timing disparity!"
 
 ---
 
-### [Slide 9: Proposed Extension: Ada-EHB] — *Student D*
+### [Slide 9: Proposed Extension — Ada-EHB Formal Specification] — *Team Member 4*
 > **Spoken Script**:
-> "To solve the buffer thrashing vulnerability, our team designed and modeled an architectural improvement: the **Adaptive Frequency-Aware Eviction-Hidden Buffer (Ada-EHB)**.
-> Ada-EHB introduces:
-> 1. **Multi-Domain Contention Scoring**: Lines that experience rapid cross-core access turnover between victim and attacker domains receive an elevated sensitivity weight ($W_s = 3.0$).
-> 2. **Entropy-Aware Replacement Priority**: Replacement candidates are evaluated using the function $P(k) = S(k) / \ln(1 + \text{Age}(k))$. Sensitive victim blocks obtain 'sticky residency', ensuring they are not displaced by attacker noise loops.
-> 3. **Burst Rate Limiting**: Streaming attacker evictions are throttled from entering the buffer.
-> In our experiments, Ada-EHB keeps the buffer hit ratio above 85% and maintains attacker accuracy at the random-guess baseline even under active adversarial thrashing."
+> "To eliminate this thrashing vulnerability, our team designed Ada-EHB. Every buffered entry $k$ is assigned a dynamic Retention Score:
+> $$R(k) = \frac{S(k) \cdot (1 + \alpha \cdot F(k))}{\ln(1 + \text{Age}(k) + \epsilon)}$$
+> where $S(k)$ is a sensitivity weight (3.0 for sensitive lines, 1.0 for normal), $F(k)$ is a 4-bit saturating frequency counter incremented on re-reference, and $\text{Age}(k)$ tracks elapsed cycles.
+> When the buffer is full, the hardware evicts the block with the minimum retention score: $\arg\min R(k)$. If all resident entries have higher retention than an incoming non-sensitive candidate, the candidate bypasses directly to DRAM.
+> In addition, a token-bucket burst rate-limiter caps non-sensitive churn allocations at 8 burst tokens per domain, requiring only 704 bytes of total metadata overhead."
 
 ---
 
-### [Slide 10: Simulation Setup & Live Code Walkthrough] — *Student C*
+### [Slide 10: Simulation Methodology & Live Code Walkthrough] — *Kontham Sripadha*
 > **Spoken Script**:
-> *(Switch screen share briefly to VS Code / terminal running `python simulation/run_experiments.py`)*
-> "To validate these findings, our team implemented a complete cycle-accurate cache simulator in Python.
-> As you can see here in `cache_model.py`, we model private L1 caches (32 KB, 4 cycles), private L2 caches (256 KB, 12 cycles), an inclusive 2 MB LLC (16-way, 38 cycles), and DRAM (200 cycles).
-> In `attacks.py`, we implement a victim performing AES table lookups and an attacker mounting Prime+Probe and Evict+Time attacks across 300 rounds.
-> When we run `python simulation/run_experiments.py`, the simulator executes across 4 configurations: Unprotected LRU, Static Partitioning, Standard TreasureCache, and our Proposed Ada-EHB."
+> *(Demonstrating live execution of `python simulation/run_experiments.py` in terminal)*
+> "To validate these findings, we developed a cycle-calibrated multi-core cache simulator in Python.
+> As shown in `cache_model.py`, we model private L1/L2 caches, an inclusive 2 MB LLC, DRAM latencies, and hardware back-invalidation.
+> In `attacks.py`, the victim executes an AES lookup table workload while the attacker mounts Prime+Probe across 16 sets.
+> We evaluated 4 configurations over 5 independent random seeds with 300 rounds each to compute statistical means and standard deviations."
 
 ---
 
-### [Slide 11: Experimental Results — Latency Gap] — *Student C*
+### [Slide 11: Experimental Results — Timing Gap Elimination] — *Team Member 3*
 > **Spoken Script**:
-> *(Return to presentation slide 11)*
-> "Looking at Slide 11, Figure 1 clearly demonstrates the latency distributions from our simulation.
-> On the left, in the unprotected cache, there is a distinct 197.7-cycle timing gap between cached hits (~38 cycles) and DRAM misses (~200 cycles). This is the exact timing gap attackers exploit.
-> On the right, under TreasureCache, evicted accesses hit inside the EHB at ~40 cycles. The observable timing gap collapses from 198 cycles down to just 1.0 cycle, completely eliminating the attacker's ability to distinguish an eviction."
+> "Looking at Slide 11, Figure 1 presents the access latency distributions. On the left, unprotected cache shows an exploitable 197.8-cycle timing gap between cached hits (~38 cycles) and DRAM misses (~200 cycles).
+> On the right, under TreasureCache, evicted accesses hit inside the EHB at ~40 cycles. The Evict+Time timing gap collapses from 198 cycles down to just 1.17 +/- 0.02 cycles, completely eliminating the attacker's ability to distinguish an eviction."
 
 ---
 
-### [Slide 12: Experimental Results — Attack Success & Buffer Scaling] — *Student D*
+### [Slide 12: Experimental Results — Attacker Accuracy & Buffer Scaling] — *Team Member 4*
 > **Spoken Script**:
-> "Slide 12 presents our security and capacity results.
-> On the left (Figure 2), in the unprotected baseline, the Prime+Probe attacker achieves 100% accuracy in identifying the secret key's cache sets. Both TreasureCache and Ada-EHB slash attacker accuracy to 5.7%–6.0%, right at the theoretical random-guess floor of 6.25% (1 out of 16 sets).
-> When we inject adversarial thrashing, standard TreasureCache experiences buffer pressure, but our Ada-EHB successfully preserves victim lines, maintaining accuracy at 5.0%.
-> On the right (Figure 3), our capacity scaling analysis shows that Ada-EHB achieves superior hit resilience across all buffer sizes compared to standard EHB."
+> "Slide 12 presents our security and capacity evaluation.
+> On the left (Figure 2), Prime+Probe attacker accuracy drops from 100% in unprotected cache to 6.27% +/- 0.83% in partitioned cache and 6.27% +/- 1.48% in Ada-EHB, matching the theoretical random-guess expectation of 6.25% (1 out of 16 sets).
+> On the right (Figure 3), under heavy adversarial churn, standard TreasureCache drops to 0% hit ratio at 16 and 32 lines and 66.7% at 64 lines due to LRU displacement. In contrast, Ada-EHB retains 100% hit ratio down to 32 lines and 62.5% at 16 lines through retention scoring and burst rate-limiting."
 
 ---
 
-### [Slide 13: Team Member Contributions] — *Student A*
+### [Slide 13: Team Member Contributions] — *Kontham Sripadha*
 > **Spoken Script**:
-> "Slide 13 summarizes the division of responsibilities across our team:
-> Student A focused on the microarchitectural analysis of inclusive LLC caches and prior defenses;
-> Student B spearheaded the threat model, attack vectors, and CT-Flush analysis;
-> Student C engineered the multi-core cache simulator, attack harness, and benchmarking pipeline;
-> And Student D designed the Ada-EHB extension and compiled the technical documentation."
+> "Slide 13 details our individual contributions:
+> Kontham Sripadha served as Lead Simulation Engineer, implementing the cache simulator and benchmarking pipeline;
+> Team Member 2 spearheaded threat modeling, attack taxonomy, and CT-Flush analysis;
+> Team Member 3 led comparative analysis of prior defenses and inclusive cache invariants;
+> And Team Member 4 formulated the Ada-EHB retention score model and compiled the technical documentation."
 
 ---
 
-### [Slide 14: Conclusion & Key Takeaways] — *Student A*
+### [Slide 14: Conclusion & Key Takeaways] — *Kontham Sripadha*
 > **Spoken Script**:
-> "In conclusion, our study confirms that TreasureCache's paradigm of hiding cache evictions is significantly more efficient than complex eviction-prevention schemes, achieving near-zero performance overhead while defeating cross-core side channels.
-> Furthermore, our proposed Ada-EHB extension demonstrates that frequency-aware and sensitivity-based buffer management effectively shields the eviction buffer from adversarial thrashing.
-> Thank you very much for your attention. We are now happy to answer any questions!"
+> "In conclusion, TreasureCache successfully demonstrates that hiding cache evictions is far superior to preventing them, achieving negligible overhead while closing cross-core timing channels.
+> Our team identified a critical buffer thrashing vulnerability under shared churn, and our Ada-EHB extension proves that frequency-aware retention scoring effectively shields sensitive buffers.
+> Thank you very much for your time!"
 
 ---
 
-## 4. Potential Q&A / Defense Preparation
-Prepare to answer these questions during live oral examination:
-1. **Why does inclusive LLC make side-channel attacks worse than non-inclusive LLC?**
-   - *Answer*: Inclusive LLC requires back-invalidating private L1/L2 caches when an LLC line is evicted. This enables cross-core attackers to evict lines from a victim's private L1/L2 without having direct access to private caches.
-2. **Why couldn't TreasureCache just use a larger set-associative buffer instead of CAM?**
-   - *Answer*: Set-associative buffers have rigid set indexing. An attacker could construct an eviction set specifically for the buffer, re-creating the side channel inside the buffer itself. Fully-associative buffers prevent set conflicts.
-3. **What is the primary trade-off of Constant-Time Flush (CT-Flush)?**
-   - *Answer*: Uncached lines that normally flush in ~45 cycles now take ~70 cycles. However, `clflush` is infrequently executed in general application code, so the overall system performance degradation is negligible (< 0.2%).
-
+### [Slide 15: References & Academic Citations] — *Kontham Sripadha*
+> **Spoken Script**:
+> "Here are the primary academic works cited in our research report and presentation, including the original TreasureCache paper published in IEEE TDSC in 2024, along with foundational prior works across microarchitectural attacks and defenses. We welcome your questions."

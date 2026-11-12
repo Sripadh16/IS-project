@@ -1,31 +1,32 @@
 # TreasureCache: Research Paper Analysis & Defense Simulation
 
 > **Course Project**: Research Paper Analysis & Experimental Validation  
-> **Assigned Paper**: *"TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks"* (IEEE Transactions on Dependable and Secure Computing, Vol. 21, No. 5, Sept/Oct 2024)  
+> **Assigned Paper**: *"TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks"* (IEEE Transactions on Dependable and Secure Computing, Vol. 21, No. 5, Sept./Oct. 2024 [1])  
 > **Authors**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren  
+> **Analysis Team**: Kontham Sripadha (Lead Analyst & Simulation Engineer), and Project Analysis Group 06  
 
 ---
 
 ## 📌 Project Overview
 
-This repository contains the comprehensive research study, technical documentation, presentation, and experimental simulation deliverables for the analysis of **TreasureCache**. 
+This repository contains the research analysis, technical documentation, presentation deck, and experimental simulation deliverables for the analysis of **TreasureCache** [1].
 
 TreasureCache introduces a paradigm shift against cross-core cache side-channel attacks (Prime+Probe, Evict+Time, Flush+Reload): rather than attempting to prevent cache evictions using expensive randomized mapping or rigid cache partitioning, it **allows evictions to occur naturally but hides exploitable evictions in a specialized Eviction-Hidden Buffer (EHB)** with an access latency matched to LLC hits (~40 cycles), supplemented by **Constant-Time Flush (CT-Flush)**.
 
 In addition to critically evaluating the original paper, our team:
 1. Identified a critical vulnerability under **adversarial buffer thrashing**.
-2. Designed and modeled an architectural improvement: **Ada-EHB (Adaptive Frequency-Aware Eviction-Hidden Buffer)**.
-3. Implemented a cycle-accurate multi-core cache hierarchy simulator validating the timing gap closure and defense efficacy.
+2. Designed and modeled an architectural improvement: **Ada-EHB (Adaptive Frequency-Aware Eviction-Hidden Buffer)** with a formal retention scoring function, 4-bit saturating frequency counters, and token-bucket burst rate-limiting.
+3. Implemented a cycle-calibrated multi-core cache hierarchy simulator validating timing gap closure, attacker accuracy reduction to the random-guess expectation (6.25%), and buffer hit-ratio preservation.
 
 ---
 
 ## 📁 Repository Structure & Deliverables
 
 ```
-├── TreasureCache_Research_Report.docx   # Comprehensive Technical Report (Word Native Style)
-├── TreasureCache_Research_Report.pdf    # Technical Report (Exported PDF, 9 pages)
-├── TreasureCache_Presentation.pptx     # 14-Slide Presentation Deck with Speaker Notes
-├── TreasureCache_Presentation.pdf      # Presentation Deck (Exported PDF)
+├── TreasureCache_Research_Report.docx   # Comprehensive Technical Report (Word Native Style, 12 pages)
+├── TreasureCache_Research_Report.pdf    # Technical Report (Exported PDF, 12 pages)
+├── TreasureCache_Presentation.pptx     # 15-Slide Presentation Deck with Speaker Notes
+├── TreasureCache_Presentation.pdf      # Presentation Deck (Exported PDF, 15 slides)
 ├── Video_Explanation_Guide.md           # Slide-by-slide speaker script, timing & recording guide
 ├── TreasureCache_Final_Submission.zip  # Consolidated submission zip archive
 │
@@ -33,10 +34,10 @@ In addition to critically evaluating the original paper, our team:
 │   ├── cache_model.py                   # Multi-core inclusive hierarchy, EHB & Ada-EHB logic
 │   ├── attacks.py                       # Prime+Probe & Evict+Time attack models against AES
 │   ├── run_experiments.py               # Benchmark runner & publication plot generator
-│   ├── simulation_results.json          # Quantitative benchmark metrics
+│   ├── simulation_results.json          # Quantitative benchmark metrics (5 seeds)
 │   ├── fig1_latency_distribution.png    # Timing gap elimination plot
-│   ├── fig2_attack_success_rate.png     # Side-channel accuracy across defenses
-│   ├── fig3_performance_tradeoff.png    # Buffer hit ratio scaling plot
+│   ├── fig2_attack_success_rate.png     # Side-channel accuracy across defenses (with error bars)
+│   ├── fig3_performance_tradeoff.png    # Buffer hit ratio scaling plot under thrashing
 │   └── README.md                        # Simulation documentation & reproduction steps
 │
 ├── build_technical_report.py            # Automated generator for Word report (.docx)
@@ -50,15 +51,16 @@ In addition to critically evaluating the original paper, our team:
 
 ## 🔬 Experimental Validation & Results Summary
 
-Simulation performed across 300 rounds of Prime+Probe and 200 rounds of Evict+Time on an inclusive multi-core cache hierarchy:
+Simulation evaluated across 5 random seeds (101, 202, 303, 404, 505) with 300 rounds of Prime+Probe and 200 rounds of Evict+Time on a cycle-calibrated inclusive multi-core cache hierarchy:
 
-| Defense Architecture | Prime+Probe Accuracy (Normal) | Prime+Probe Accuracy (Thrashed) | Evict+Time Timing Gap | Security Assessment |
+| Defense Architecture | Prime+Probe Accuracy (Mean ± Std) | Evict+Time Timing Gap | Buffer Hit Ratio (32 lines / Thrash) | Security Assessment |
 | :--- | :---: | :---: | :---: | :--- |
-| **Unprotected (LRU)** | **100.0%** | **100.0%** | **197.7 cycles** | Vulnerable (Severe Leakage) |
-| **Static Partitioning** | 6.7% | 6.7% | 1.0 cycle | Protected (High Capacity Waste) |
-| **TreasureCache (Standard)** | 6.0% | 4.3% | 1.0 cycle | Protected (Clean); Buffer Pressure under Thrashing |
-| **Ada-EHB (Proposed)** | **5.7%** | **5.0%** | **1.0 cycle** | Robustly Protected Across All Scenarios |
-| *Theoretical Random Floor* | *6.25% (1/16)* | *6.25% (1/16)* | *0.0 cycles* | *Ideal Security Bound* |
+| **Unprotected (LRU Baseline)** | **100.0% ± 0.0%** | **197.80 ± 0.24 cyc** | N/A | Vulnerable (100% Secret Leakage) |
+| **Static Partitioning** | 6.27% ± 0.83% | 0.99 ± 0.01 cyc | N/A | Protected (High Capacity Waste) |
+| **TreasureCache (Clean) [1]** | 11.20% ± 0.72% | 1.17 ± 0.02 cyc | 100.0% | Protected Under Nominal Traffic |
+| **TreasureCache (Thrashed) [1]** | 6.27% ± 1.48% | 1.17 ± 0.02 cyc | **0.0%** | Degraded (LRU Evicts Sensitive Lines) |
+| **Ada-EHB (Proposed Improvement)** | **6.27% ± 1.48%** | **1.17 ± 0.02 cyc** | **100.0%** | **Robustly Protected (Retention Score Preserves Lines)** |
+| *Theoretical Random Floor* | *6.25% (1/16 sets)* | *0.00 cyc* | *100.0%* | *Ideal Security Bound* |
 
 ---
 
@@ -66,7 +68,7 @@ Simulation performed across 300 rounds of Prime+Probe and 200 rounds of Evict+Ti
 
 ### Prerequisites
 - Python 3.8+
-- Required packages: `numpy`, `matplotlib` (for DOCX/PPTX generation: `python-docx`, `python-pptx`)
+- Required packages: `numpy`, `matplotlib`, `python-docx`, `python-pptx`
 
 ```bash
 pip install numpy matplotlib python-docx python-pptx
@@ -87,5 +89,5 @@ python package_submission.py
 ---
 
 ## 👥 Authors & Attribution
-- **Original Research**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (IEEE TDSC 2024).
-- **Analysis, Simulator & Ada-EHB Extension**: Course Research Analysis Team 06.
+- **Original Research**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (*IEEE TDSC*, Vol. 21, No. 5, Sept./Oct. 2024 [1]).
+- **Research Analysis, Simulator & Ada-EHB Extension**: Kontham Sripadha and Course Analysis Team 06.
