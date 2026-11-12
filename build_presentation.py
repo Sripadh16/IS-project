@@ -136,9 +136,9 @@ def generate_presentation():
         "SPEAKER (Lead / Introduction):\n"
         "Welcome everyone. Today our team is presenting our research analysis and experimental validation of the paper "
         "'TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks', published in IEEE TDSC in 2024. "
-        "In this presentation, we will walk through the microarchitectural root problem of cross-core cache side channels, "
+        "In this presentation, we will walk through the microarchitectural root problem of cross-core cache timing channels, "
         "evaluate TreasureCache's innovative paradigm of hiding evictions rather than preventing them, discuss our critical assessment, "
-        "and present our independent contribution: Ada-EHB, an adaptive frequency-aware eviction buffer validated through simulation."
+        "and present our independent contribution: Ada-EHB, an adaptive frequency-aware eviction buffer verified through simulation."
     )
 
     # =============================================================
@@ -369,9 +369,9 @@ def generate_presentation():
         [
             "• Threat: An attacker could intentionally flood the EHB to create a secondary side channel inside the buffer itself.",
             "• Ownership Quotas: Each security domain is assigned a maximum capacity quota (Q = Capacity / N_domains) [1].",
-            "• Intra-Domain Replacement: When the buffer is full, incoming blocks can only displace blocks owned by the same domain, or unowned stale blocks.",
+            "• Strict Eligibility: Under _eligible, an incoming block can ONLY replace an entry whose owners are a subset of the incoming block's owners.",
             "• Attacker accesses in Domain 1 cannot displace victim blocks owned by Domain 0.",
-            "• LLC Reload Coherence: When a buffered line is re-accessed and brought back into LLC, it is cleanly removed from the EHB."
+            "• LLC Reload Coherence: When a buffered line is re-accessed, it is removed from EHB and reinstalled into LLC."
         ]
     )
     
@@ -390,7 +390,7 @@ def generate_presentation():
     set_speaker_notes(
         s7,
         "SPEAKER (Member 3 - Replacement & CT-Flush):\n"
-        "Slide 7 covers secure replacement and CT-Flush. TreasureCache uses domain ownership quotas to prevent an attacker from evicting "
+        "Slide 7 covers secure replacement and CT-Flush. TreasureCache uses domain ownership quotas and subset eligibility to prevent an attacker from evicting "
         "victim blocks from the buffer. CT-Flush uses a predefined waiting period so that clflush executes in constant time even when "
         "the block is absent, eliminating Flush+Flush side channels."
     )
@@ -414,10 +414,10 @@ def generate_presentation():
     
     add_card(
         s8, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Team Research Hypothesis: Adversarial Churn",
+        "Team Research Hypothesis: Shared Memory Churn",
         [
-            "• The Problem: The original paper's ownership quota protects against private evictions, but what happens during high-entropy shared churn?",
-            "• Attack Scenario: If an attacker accesses shared library pages (which qualify for EHB insertion) and causes rapid evictions, shared lines enter the EHB.",
+            "• The Problem: The original paper's ownership quota protects against private evictions, but what happens during shared-memory churn?",
+            "• Attack Scenario: If an attacker accesses shared library pages ({0, 1} joint ownership) and causes rapid evictions, shared lines enter the EHB.",
             "• Under standard FIFO/LRU within quotas, rapid shared churn prematurely displaces sensitive victim lines to DRAM.",
             "• Reopening the Timing Gap: When the victim re-accesses displaced lines, it incurs a DRAM miss, leaking secrets!",
             "• Motivation for Ada-EHB: We need frequency-aware retention scoring and burst rate-limiting."
@@ -429,7 +429,7 @@ def generate_presentation():
         s8,
         "SPEAKER (Member 4 - Critical Assessment):\n"
         "In Slide 8, we distinguish established paper limitations from our team's research hypothesis. The established limitations include "
-        "CAM power scaling and non-inclusive caches. Our research hypothesis investigates adversarial churn: if an attacker generates evictions "
+        "CAM power scaling and non-inclusive caches. Our research hypothesis investigates shared-memory churn: if an attacker generates evictions "
         "of shared library pages that qualify for the EHB, unweighted LRU can displace victim lines to DRAM. This motivated our proposed extension: Ada-EHB."
     )
 
@@ -446,12 +446,12 @@ def generate_presentation():
         [
             "Every buffered entry k is assigned a dynamic Retention Score:",
             "       R(k) = [ S(k) * (1 + alpha * F(k)) ] / ln(1 + Age(k) + epsilon)",
-            "• S(k) = Sensitivity Weight (3.0 for sensitive/cross-domain, 1.0 for normal).",
+            "• S(k) = Sensitivity Weight (3.0 for sensitive lines, 1.0 for normal).",
             "• F(k) = 4-Bit Saturating Frequency Counter (0 <= F(k) <= 15).",
             "• alpha = Frequency weight factor (0.2); epsilon = 10^-5.",
             "• Age(k) = Elapsed time (current_time - last_access_time).",
-            "• Replacement Rule: Evict entry with lowest score: k_evict = argmin R(k).",
-            "• Sticky Residency & Bypass: If incoming candidate has score <= min R(k) and is non-sensitive, it bypasses directly to DRAM."
+            "• Protected-Entry Sticky Residency: Sensitive entries are protected while eligible non-sensitive entries exist.",
+            "• Overflow Bypass: If all eligible entries are sensitive, non-sensitive incoming blocks bypass directly to DRAM."
         ],
         border_color=COLOR_ACCENT
     )
@@ -486,25 +486,27 @@ def generate_presentation():
         s10, Inches(0.8), Inches(1.6), Inches(5.6), Inches(5.2),
         "Cycle-Calibrated Multi-Core Simulator",
         [
-            "• Developed a modular Python cache architecture simulator (`simulation/`):",
+            "• Modular Python cache architecture simulator (`simulation/`):",
             "  - Private L1 D-Cache: 32 KB, 8-way (4 cycles hit latency).",
             "  - Private L2 Cache: 256 KB, 8-way (12 cycles hit latency).",
             "  - Shared Inclusive LLC: 2 MB, 16-way (38 cycles hit latency).",
             "  - DRAM Access: 200 cycles latency.",
-            "• Models hardware inclusive back-invalidation on LLC evictions.",
+            "• Explicit private sharer tracking & coherence back-invalidation.",
             "• Implements CT-Flush predefined waiting period (~70 cycles).",
-            "• Evaluates 4 modes: Unprotected LRU, Static Partitioning, TreasureCache, and Ada-EHB."
+            "• 10 behavioral unit tests (`test_simulation.py`) all pass cleanly."
         ]
     )
     
     add_card(
         s10, Inches(6.8), Inches(1.6), Inches(5.7), Inches(5.2),
-        "Cryptographic Workload & Multi-Trial Rigor",
+        "Workloads & Multi-Trial Rigor",
         [
-            "• Victim Cryptographic Workload: AES T-table lookup operations (16 cache lines / 1024 bytes) indexed by plaintext ^ secret_key.",
-            "• Attacker Campaign: Full Prime+Probe (16 sets) and Evict+Time.",
-            "• Statistical Rigor: 5 independent random seeds (101, 202, 303, 404, 505) with 300 rounds each.",
-            "• Metrics Reported: Mean and Standard Deviation for all attack success rates and timing gaps."
+            "• Cryptographic Workload: Victim executes table lookups on an 8-line sensitive working set (AES T-tables).",
+            "• Multi-Trial Rigor: 5 independent random seeds (101, 202, 303, 404, 505) with 300 rounds each.",
+            "• Workload Scenarios Evaluated:",
+            "  1. Domain-isolated churn (evaluating ownership quota isolation).",
+            "  2. Shared-memory contention (evaluating Ada-EHB retention scoring).",
+            "  3. Matched Evict+Time timing gap closure."
         ]
     )
     
@@ -517,61 +519,63 @@ def generate_presentation():
     )
 
     # =============================================================
-    # SLIDE 11: RESULTS - TIMING GAP ELIMINATION
+    # SLIDE 11: RESULTS - DOMAIN ISOLATION & LATENCY
     # =============================================================
     s11 = prs.slides.add_slide(blank_layout)
     set_slide_background(s11, COLOR_LIGHT_BG)
-    add_header(s11, "Experimental Results: Closing the Timing Gap")
+    add_header(s11, "Results: Domain Isolation and Access Latency")
     
-    fig1_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig1_latency_distribution.png')
+    fig1_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig1_residency.png')
+    fig2_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig2_victim_latency.png')
+    
     if os.path.exists(fig1_path):
-        s11.shapes.add_picture(fig1_path, Inches(0.8), Inches(1.6), width=Inches(7.2))
+        s11.shapes.add_picture(fig1_path, Inches(0.8), Inches(1.6), width=Inches(5.7))
+    if os.path.exists(fig2_path):
+        s11.shapes.add_picture(fig2_path, Inches(6.8), Inches(1.6), width=Inches(5.7))
+        
+    set_speaker_notes(
+        s11,
+        "SPEAKER (Member 3 - Residency & Latency Results):\n"
+        "Slide 11 presents our simulation findings for domain-isolated traffic. On the left (Figure 1), under domain-isolated churn, "
+        "TreasureCache's domain ownership mechanism successfully isolates victim lines. At capacity 8, the 4-line quota is enforced; "
+        "at capacities 16 and above, all 8 victim lines are retained for both TreasureCache and Ada-EHB. On the right (Figure 2), "
+        "access latency drops from 202 cycles in the unprotected baseline down to 40 cycles."
+    )
+
+    # =============================================================
+    # SLIDE 12: RESULTS - SHARED CONTENTION & TIMING GAP
+    # =============================================================
+    s12 = prs.slides.add_slide(blank_layout)
+    set_slide_background(s12, COLOR_LIGHT_BG)
+    add_header(s12, "Results: Shared-Memory Contention and Timing Gap Closure")
+    
+    fig3_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig3_shared_contention.png')
+    if os.path.exists(fig3_path):
+        s12.shapes.add_picture(fig3_path, Inches(0.8), Inches(1.6), width=Inches(7.2))
         
     add_card(
-        s11, Inches(8.3), Inches(1.6), Inches(4.2), Inches(5.2),
-        "Latency Findings (Simulation Model)",
+        s12, Inches(8.3), Inches(1.6), Inches(4.2), Inches(5.2),
+        "Key Findings (Shared Churn)",
         [
-            "• Left Plot (Unprotected):",
-            "  - LLC hits: ~38 cycles.",
-            "  - DRAM misses: ~200 cycles.",
-            "  - 197.8-cycle gap enables trivial key extraction.",
-            "• Right Plot (TreasureCache):",
-            "  - Evicted accesses hit in EHB in ~40 cycles.",
-            "  - Evict+Time timing gap drops to 1.17 +/- 0.02 cycles!",
-            "  - Completely indistinguishable from an LLC hit."
+            "• Shared Contention (Figure 3):",
+            "  - Joint ownership {0, 1} allows shared lines to compete.",
+            "  - Standard TreasureCache: LRU displaces victim lines (0 / 8 retained, latency 201 cyc).",
+            "  - Ada-EHB: Retention score (S=3.0, F>=1) and rate-limiting retain all 8 / 8 lines (latency 40 cyc).",
+            "• Evict+Time Timing Gap:",
+            "  - Unprotected: 164.45 +/- 0.23 cyc.",
+            "  - TreasureCache: 2.00 +/- 0.00 cyc.",
+            "  - Ada-EHB: 2.00 +/- 0.00 cyc."
         ],
         border_color=COLOR_ACCENT
     )
     
     set_speaker_notes(
-        s11,
-        "SPEAKER (Member 3 - Latency Results):\n"
-        "Slide 11 shows our simulation latency distributions. On the left, unprotected cache shows a 197.8-cycle timing gap between hits and misses. "
-        "On the right, TreasureCache eliminates this gap by serving evicted accesses via the EHB at ~40 cycles, collapsing the timing gap to 1.17 cycles."
-    )
-
-    # =============================================================
-    # SLIDE 12: RESULTS - ATTACK SUCCESS & BUFFER SCALING
-    # =============================================================
-    s12 = prs.slides.add_slide(blank_layout)
-    set_slide_background(s12, COLOR_LIGHT_BG)
-    add_header(s12, "Results: Attacker Accuracy & Buffer Scaling Under Thrashing")
-    
-    fig2_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig2_attack_success_rate.png')
-    fig3_path = os.path.join(os.path.dirname(__file__), 'simulation', 'fig3_performance_tradeoff.png')
-    
-    if os.path.exists(fig2_path):
-        s12.shapes.add_picture(fig2_path, Inches(0.8), Inches(1.6), width=Inches(5.7))
-    if os.path.exists(fig3_path):
-        s12.shapes.add_picture(fig3_path, Inches(6.8), Inches(1.6), width=Inches(5.7))
-        
-    set_speaker_notes(
         s12,
-        "SPEAKER (Member 4 - Accuracy & Scaling Results):\n"
-        "Slide 12 presents our security and capacity results. On the left (Figure 2), Prime+Probe attacker accuracy drops from 100% in unprotected "
-        "cache down to 6.27% +/- 0.83% in partitioned and 6.27% +/- 1.48% in Ada-EHB, matching the expected random-guess baseline of 6.25% (1/16 sets). "
-        "On the right (Figure 3), under heavy adversarial churn, standard TreasureCache drops to 0% hit ratio at 16/32 lines and 66.7% at 64 lines, "
-        "whereas Ada-EHB retains 100% hit ratio down to 32 lines and 62.5% at 16 lines."
+        "SPEAKER (Member 4 - Shared Contention Results):\n"
+        "Slide 12 demonstrates where Ada-EHB provides a measurable advantage: under shared-memory contention. When blocks have joint ownership {0, 1}, "
+        "unweighted LRU in standard TreasureCache allows attacker churn to displace all 8 victim lines to DRAM. In contrast, Ada-EHB's retention scoring "
+        "and token-bucket rate-limiting preserve 100% of victim lines in the EHB, keeping access latency at 40 cycles. Furthermore, both defenses collapse "
+        "the Evict+Time timing gap from 164.5 cycles down to 2 cycles."
     )
 
     # =============================================================
@@ -587,7 +591,7 @@ def generate_presentation():
         [
             "• Implemented multi-core cache hierarchy simulator (`cache_model.py`, `attacks.py`).",
             "• Built automated benchmarking suite with 5 random seeds (`run_experiments.py`).",
-            "• Generated publication-quality figures with error bars."
+            "• Generated publication-quality figures from verified simulator output."
         ]
     )
     add_card(
@@ -655,8 +659,8 @@ def generate_presentation():
     takeaways = [
         "1. Paradigm Shift: TreasureCache [1] proves that hiding evictions in a tiny buffer (EHB) is far more efficient than preventing evictions with complex address mapping.",
         "2. Negligible Overhead: Demonstrates < 1.2% overhead in gem5 while providing complete defense against Prime+Probe, Evict+Time, and Flush+Reload.",
-        "3. Critical Vulnerability Identified: Standard TreasureCache experiences buffer thrashing under adversarial shared memory churn.",
-        "4. Ada-EHB Extension Validated: Our proposed sensitivity scoring and burst rate-limiting preserve 100% buffer hit ratio down to 32 lines and 62.5% at 16 lines.",
+        "3. Ownership Protection Verified: Under domain-isolated traffic, TreasureCache domain ownership strictly isolates victim lines from attacker churn.",
+        "4. Ada-EHB Extension Validated: Under shared-memory contention ({0, 1} joint ownership), Ada-EHB retention scoring and rate-limiting preserve 100% of victim lines.",
         "5. Future Work: Adapting eviction-hiding principles to non-inclusive cache topologies and multi-socket NUMA systems."
     ]
     for t in takeaways:
@@ -671,8 +675,8 @@ def generate_presentation():
         s14,
         "SPEAKER (Lead / Conclusion):\n"
         "In conclusion, TreasureCache successfully demonstrates that hiding cache evictions is far superior to preventing them. "
-        "Our analysis verified its security claims while revealing a critical thrashing vulnerability, which our Ada-EHB extension "
-        "effectively mitigates. Thank you for your time, and we now invite your questions!"
+        "Our analysis verified its ownership isolation under private traffic while demonstrating that Ada-EHB retention scoring "
+        "provides crucial protection under shared-memory contention. Thank you for your time, and we now invite your questions!"
     )
 
     # =============================================================

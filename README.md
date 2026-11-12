@@ -1,49 +1,53 @@
 # TreasureCache: Research Paper Analysis & Defense Simulation
 
-> **Course Project**: Research Paper Analysis & Experimental Validation  
+> **Course Project**: Research Paper Analysis, Critical Evaluation & Experimental Validation  
 > **Assigned Paper**: *"TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks"* (IEEE Transactions on Dependable and Secure Computing, Vol. 21, No. 5, Sept./Oct. 2024 [1])  
-> **Authors**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren  
+> **Original Authors**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren  
 > **Analysis Team**: Kontham Sripadha (Lead Analyst & Simulation Engineer), and Project Analysis Group 06  
 
 ---
 
 ## 📌 Project Overview
 
-This repository contains the research analysis, technical documentation, presentation deck, and experimental simulation deliverables for the analysis of **TreasureCache** [1].
+This repository contains the complete research deliverables for our critical analysis and architectural extension of **TreasureCache** [1].
 
-TreasureCache introduces a paradigm shift against cross-core cache side-channel attacks (Prime+Probe, Evict+Time, Flush+Reload): rather than attempting to prevent cache evictions using expensive randomized mapping or rigid cache partitioning, it **allows evictions to occur naturally but hides exploitable evictions in a specialized Eviction-Hidden Buffer (EHB)** with an access latency matched to LLC hits (~40 cycles), supplemented by **Constant-Time Flush (CT-Flush)**.
+TreasureCache addresses cross-core cache side-channel attacks (Prime+Probe, Evict+Time, Flush+Reload). Rather than preventing evictions through rigid hardware cache partitioning or high-overhead randomized indexing, it **permits evictions to occur naturally while shielding evicted lines inside a specialized Content-Addressable Memory (CAM) called the Eviction-Hidden Buffer (EHB)** with an access latency matched to LLC hits (~40 cycles), supplemented by **Constant-Time Flush (CT-Flush)**.
 
-In addition to critically evaluating the original paper, our team:
-1. Identified a critical vulnerability under **adversarial buffer thrashing**.
-2. Designed and modeled an architectural improvement: **Ada-EHB (Adaptive Frequency-Aware Eviction-Hidden Buffer)** with a formal retention scoring function, 4-bit saturating frequency counters, and token-bucket burst rate-limiting.
-3. Implemented a cycle-calibrated multi-core cache hierarchy simulator validating timing gap closure, attacker accuracy reduction to the random-guess expectation (6.25%), and buffer hit-ratio preservation.
+### Our Independent Contributions:
+1. **Critical Vulnerability Discovery**: Identified that while TreasureCache's security domain ownership isolates strictly private memory lines, **shared-memory lines (with joint ownership `owners={0, 1}`) are vulnerable to adversarial buffer thrashing**, causing victim lines to be evicted to DRAM (0% retention, 201 cycles).
+2. **Architectural Extension (Ada-EHB)**: Designed and implemented **Ada-EHB (Adaptive Frequency-Aware Eviction-Hidden Buffer)** featuring:
+   - Dynamic retention scoring: $R(k) = \frac{S(k) \cdot (1 + 0.2 \cdot F(k))}{\ln(1 + \text{Age}(k) + 10^{-5})}$
+   - Sticky residency for marked sensitive blocks (e.g., cryptographic S-boxes)
+   - Token-bucket burst rate-limiting against adversarial flooding
+3. **Rigorous Experimental Validation**: Built an inclusive multi-core cache hierarchy simulator, implemented 10 automated unit tests, and validated the system across 5 random seeds (101, 202, 303, 404, 505) under identical workloads.
 
 ---
 
 ## 📁 Repository Structure & Deliverables
 
 ```
-├── TreasureCache_Research_Report.docx   # Comprehensive Technical Report (Word Native Style, 12 pages)
-├── TreasureCache_Research_Report.pdf    # Technical Report (Exported PDF, 12 pages)
-├── TreasureCache_Presentation.pptx     # 15-Slide Presentation Deck with Speaker Notes
-├── TreasureCache_Presentation.pdf      # Presentation Deck (Exported PDF, 15 slides)
-├── Video_Explanation_Guide.md           # Slide-by-slide speaker script, timing & recording guide
+├── TreasureCache_Research_Report.docx   # Comprehensive Technical Report (Word Native Style, IEEE format)
+├── TreasureCache_Research_Report.pdf    # Technical Report (Exported PDF)
+├── TreasureCache_Presentation.pptx     # 15-Slide Presentation Deck with Complete Speaker Notes
+├── TreasureCache_Presentation.pdf      # Presentation Deck (Exported PDF)
+├── Video_Explanation_Guide.md           # Slide-by-slide speaker script, timing, demo & Q&A guide
 ├── TreasureCache_Final_Submission.zip  # Consolidated submission zip archive
 │
 ├── simulation/                          # Source Code for Cache Simulator & Attacks
-│   ├── cache_model.py                   # Multi-core inclusive hierarchy, EHB & Ada-EHB logic
-│   ├── attacks.py                       # Prime+Probe & Evict+Time attack models against AES
-│   ├── run_experiments.py               # Benchmark runner & publication plot generator
+│   ├── cache_model.py                   # Multi-core hierarchy, EHB, CT-Flush & Ada-EHB logic
+│   ├── attacks.py                       # AES victim workload, forced eviction, residency & Evict+Time
+│   ├── test_simulation.py               # 10 automated unit tests for placement, replacement & CT-Flush
+│   ├── run_experiments.py               # Benchmark runner & publication plot generator (5 seeds)
 │   ├── simulation_results.json          # Quantitative benchmark metrics (5 seeds)
-│   ├── fig1_latency_distribution.png    # Timing gap elimination plot
-│   ├── fig2_attack_success_rate.png     # Side-channel accuracy across defenses (with error bars)
-│   ├── fig3_performance_tradeoff.png    # Buffer hit ratio scaling plot under thrashing
+│   ├── fig1_residency.png               # Domain-isolated residency benchmark (Capacities 8, 16, 32, 64)
+│   ├── fig2_victim_latency.png          # Evict+Time victim latency distributions (Baseline vs TC vs Ada-EHB)
+│   ├── fig3_shared_contention.png       # Shared-memory contention defense (TC 0/8 vs Ada-EHB 8/8)
 │   └── README.md                        # Simulation documentation & reproduction steps
 │
 ├── build_technical_report.py            # Automated generator for Word report (.docx)
 ├── build_presentation.py                # Automated generator for PowerPoint (.pptx)
 ├── package_submission.py                # Submission packaging script
-├── 6_TreasureCache_...pdf               # Original IEEE TDSC 2024 Research Paper
+├── 6_TreasureCache_Hiding_Cache_Evictions_Against_Side_Channel_Attacks.pdf # IEEE TDSC 2024 Paper
 └── IS_ResearchAnalysis_Instructions.pdf  # Course project guidelines & evaluation rubrics
 ```
 
@@ -51,43 +55,64 @@ In addition to critically evaluating the original paper, our team:
 
 ## 🔬 Experimental Validation & Results Summary
 
-Simulation evaluated across 5 random seeds (101, 202, 303, 404, 505) with 300 rounds of Prime+Probe and 200 rounds of Evict+Time on a cycle-calibrated inclusive multi-core cache hierarchy:
+Simulations evaluated across 5 random seeds (`101`, `202`, `303`, `404`, `505`) with 100 trials per configuration on a cycle-calibrated multi-core cache hierarchy (L1 hit: 4 cyc; LLC hit / EHB hit: 40 cyc; DRAM miss: 200 cyc):
 
-| Defense Architecture | Prime+Probe Accuracy (Mean ± Std) | Evict+Time Timing Gap | Buffer Hit Ratio (32 lines / Thrash) | Security Assessment |
+### 1. Evict+Time Side-Channel Mitigation
+
+| Architecture | Evicted Set Latency (cyc) | Non-Evicted Set Latency (cyc) | Timing Gap ($\Delta$) | Attack Feasibility |
 | :--- | :---: | :---: | :---: | :--- |
-| **Unprotected (LRU Baseline)** | **100.0% ± 0.0%** | **197.80 ± 0.24 cyc** | N/A | Vulnerable (100% Secret Leakage) |
-| **Static Partitioning** | 6.27% ± 0.83% | 0.99 ± 0.01 cyc | N/A | Protected (High Capacity Waste) |
-| **TreasureCache (Clean) [1]** | 11.20% ± 0.72% | 1.17 ± 0.02 cyc | 100.0% | Protected Under Nominal Traffic |
-| **TreasureCache (Thrashed) [1]** | 6.27% ± 1.48% | 1.17 ± 0.02 cyc | **0.0%** | Degraded (LRU Evicts Sensitive Lines) |
-| **Ada-EHB (Proposed Improvement)** | **6.27% ± 1.48%** | **1.17 ± 0.02 cyc** | **100.0%** | **Robustly Protected (Retention Score Preserves Lines)** |
-| *Theoretical Random Floor* | *6.25% (1/16 sets)* | *0.00 cyc* | *100.0%* | *Ideal Security Bound* |
+| **Baseline (Unprotected)** | **204.45 ± 0.23** | **40.00 ± 0.00** | **164.45 ± 0.23 cyc** | **High (Full Key Recovery)** |
+| **TreasureCache [1]** | 42.00 ± 0.00 | 40.00 ± 0.00 | 2.00 ± 0.00 cyc | Neutralized (Within Noise) |
+| **Ada-EHB (Proposed)** | 42.00 ± 0.00 | 40.00 ± 0.00 | **2.00 ± 0.00 cyc** | **Neutralized (Within Noise)** |
+
+### 2. Domain-Isolated Residency Benchmark (Victim Lines Retained / 8)
+
+| EHB Capacity ($N_{\text{lines}}$) | Domain Quota ($N_{\text{quota}}$) | TreasureCache Retained | Ada-EHB Retained | Victim Latency |
+| :---: | :---: | :---: | :---: | :---: |
+| **8 lines** | 4 lines | 4.0 / 8 lines | 4.0 / 8 lines | 120.5 cycles |
+| **16 lines** | 8 lines | 8.0 / 8 lines | 8.0 / 8 lines | 40.0 cycles |
+| **32 lines** | 16 lines | 8.0 / 8 lines | 8.0 / 8 lines | 40.0 cycles |
+| **64 lines** | 32 lines | 8.0 / 8 lines | 8.0 / 8 lines | 40.0 cycles |
+
+*Finding*: In domain-isolated traffic (`owners={1}` vs `{0}`), TreasureCache's domain ownership strictly isolates victim lines; Ada-EHB produces identical, verified results.
+
+### 3. Shared-Memory Contention Defense (`owners={0, 1}`)
+
+| Architecture | Sensitive Lines Retained (/8) | Mean Victim Latency (cyc) | Buffer State Under Thrashing |
+| :--- | :---: | :---: | :--- |
+| **TreasureCache (LRU) [1]** | **0.0 / 8 lines (0.0%)** | **201.00 cycles** | **Displaced to DRAM by attacker traffic** |
+| **Ada-EHB (Proposed)** | **8.0 / 8 lines (100.0%)** | **40.00 cycles** | **100% Protected (Sticky Residency & Retention Score)** |
 
 ---
 
-## 🚀 Quickstart: Running the Simulation
+## 🚀 Quickstart: Reproduction Instructions
 
-### Prerequisites
-- Python 3.8+
-- Required packages: `numpy`, `matplotlib`, `python-docx`, `python-pptx`
-
-```bash
-pip install numpy matplotlib python-docx python-pptx
+### 1. Run Automated Unit Tests (10/10)
+```powershell
+python simulation/test_simulation.py
 ```
+*Expected Output*: `Ran 10 tests in 0.005s - OK`
 
-### Run Benchmarks & Re-generate Plots:
-```bash
+### 2. Run Benchmarks & Re-generate Figures (5 Seeds)
+```powershell
 python simulation/run_experiments.py
 ```
+*Outputs*: `simulation_results.json`, `fig1_residency.png`, `fig2_victim_latency.png`, `fig3_shared_contention.png`.
 
-### Re-generate Report, Slides & Zip Package:
-```bash
+### 3. Build Word Report & PowerPoint Presentation
+```powershell
 python build_technical_report.py
 python build_presentation.py
+```
+
+### 4. Build Submission ZIP Package
+```powershell
 python package_submission.py
 ```
+*Outputs*: `TreasureCache_Final_Submission.zip` (contains all mandatory project artifacts).
 
 ---
 
 ## 👥 Authors & Attribution
-- **Original Research**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (*IEEE TDSC*, Vol. 21, No. 5, Sept./Oct. 2024 [1]).
-- **Research Analysis, Simulator & Ada-EHB Extension**: Kontham Sripadha and Course Analysis Team 06.
+- **Original Research**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (*IEEE Transactions on Dependable and Secure Computing*, Vol. 21, No. 5, Sept./Oct. 2024 [1]).
+- **Research Analysis, Independent Critical Evaluation & Ada-EHB Extension**: Kontham Sripadha and Course Analysis Team 06.

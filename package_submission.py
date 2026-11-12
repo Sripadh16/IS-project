@@ -11,6 +11,7 @@ def package_submission():
     zip_path = os.path.join(base_dir, "TreasureCache_Final_Submission.zip")
     
     files_to_include = [
+        "README.md",
         "TreasureCache_Research_Report.docx",
         "TreasureCache_Research_Report.pdf",
         "TreasureCache_Presentation.pptx",
