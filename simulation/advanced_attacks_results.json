@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "title": "TreasureCache Multi-Vector Attack Suite Benchmark (IEEE TDSC 2024)",
+    "rounds_per_condition": 50
+  },
+  "results": {
+    "Flush+Reload": {
+      "none": {
+        "active_latency": 38.0,
+        "inactive_latency": 202.04,
+        "timing_delta": 164.04,
+        "threshold": 100.0,
+        "success_rate": 1.0,
+        "verdict": "VULNERABLE",
+        "details": {
+          "active_levels": {
+            "LLC_HIT": 50
+          },
+          "inactive_levels": {
+            "DRAM_MISS": 50
+          }
+        }
+      },
+      "treasure_cache": {
+        "active_latency": 38.0,
+        "inactive_latency": 40.0,
+        "timing_delta": 2.0,
+        "threshold": 100.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {
+          "active_levels": {
+            "LLC_HIT": 50
+          },
+          "inactive_levels": {
+            "EHB_HIT": 50
+          }
+        }
+      },
+      "ada_ehb": {
+        "active_latency": 38.0,
+        "inactive_latency": 40.0,
+        "timing_delta": 2.0,
+        "threshold": 100.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {
+          "active_levels": {
+            "LLC_HIT": 50
+          },
+          "inactive_levels": {
+            "EHB_HIT": 50
+          }
+        }
+      }
+    },
+    "Flush+Flush": {
+      "none": {
+        "active_latency": 95.0,
+        "inactive_latency": 45.0,
+        "timing_delta": 50.0,
+        "threshold": 70.0,
+        "success_rate": 1.0,
+        "verdict": "VULNERABLE",
+        "details": {}
+      },
+      "treasure_cache": {
+        "active_latency": 70.0,
+        "inactive_latency": 70.0,
+        "timing_delta": 0.0,
+        "threshold": 70.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {}
+      },
+      "ada_ehb": {
+        "active_latency": 70.0,
+        "inactive_latency": 70.0,
+        "timing_delta": 0.0,
+        "threshold": 70.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {}
+      }
+    },
+    "Prime+Probe": {
+      "none": {
+        "active_latency": 205.78,
+        "inactive_latency": 38.0,
+        "timing_delta": 167.78,
+        "threshold": 100.0,
+        "success_rate": 1.0,
+        "verdict": "VULNERABLE",
+        "details": {}
+      },
+      "treasure_cache": {
+        "active_latency": 40.0,
+        "inactive_latency": 38.0,
+        "timing_delta": 2.0,
+        "threshold": 100.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {}
+      },
+      "ada_ehb": {
+        "active_latency": 40.0,
+        "inactive_latency": 38.0,
+        "timing_delta": 2.0,
+        "threshold": 100.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {}
+      }
+    },
+    "Prime+Reprime+Probe": {
+      "none": {
+        "active_latency": 205.88,
+        "inactive_latency": 38.0,
+        "timing_delta": 167.88,
+        "threshold": 100.0,
+        "success_rate": 1.0,
+        "verdict": "VULNERABLE",
+        "details": {}
+      },
+      "treasure_cache": {
+        "active_latency": 40.0,
+        "inactive_latency": 38.0,
+        "timing_delta": 2.0,
+        "threshold": 100.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {}
+      },
+      "ada_ehb": {
+        "active_latency": 40.0,
+        "inactive_latency": 38.0,
+        "timing_delta": 2.0,
+        "threshold": 100.0,
+        "success_rate": 0.5,
+        "verdict": "NEUTRALIZED",
+        "details": {}
+      },
+      "cond1_only": {
+        "active_latency": 205.78,
+        "inactive_latency": 38.0,
+        "timing_delta": 167.78,
+        "threshold": 100.0,
+        "success_rate": 1.0,
+        "verdict": "VULNERABLE",
+        "details": {}
+      }
+    }
+  }
+}

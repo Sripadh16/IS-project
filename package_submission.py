@@ -1,6 +1,6 @@
 """
-package_submission.py - Bundles all required course deliverables and simulation files
-into a single zip archive for submission.
+package_submission.py - Bundles all required course deliverables, advanced architectural
+simulation files, hardware models, and test suites into a single zip archive for submission.
 """
 
 import os
@@ -25,13 +25,25 @@ def package_submission():
     sim_files = [
         "cache_model.py",
         "attacks.py",
+        "ada_ehb_plus.py",
+        "advanced_attacks.py",
+        "formal_verification.py",
+        "hardware_evaluation.py",
         "run_experiments.py",
         "test_simulation.py",
+        "test_advanced_suite.py",
+        "test_formal_verification.py",
         "README.md",
         "simulation_results.json",
+        "advanced_attacks_results.json",
+        "hardware_metrics.json",
+        "analytical_validation.json",
         "fig1_residency.png",
         "fig2_victim_latency.png",
-        "fig3_shared_contention.png"
+        "fig3_shared_contention.png",
+        os.path.join("rtl", "cam_tag_cell.v"),
+        os.path.join("rtl", "retention_alu.v"),
+        os.path.join("rtl", "token_bucket_limiter.v")
     ]
     
     print(f"Creating submission archive: {zip_path}")

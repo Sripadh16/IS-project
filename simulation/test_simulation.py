@@ -158,5 +158,63 @@ class ComprehensiveCacheTests(unittest.TestCase):
             self.assertEqual(lat_cached, 70, f"Cached CT-Flush failed for {mode}")
 
 
+    def test_11_hardware_synthesis_and_storage_equations(self):
+        """Test hardware synthesis, storage equations, timing and RTL export."""
+        from hardware_evaluation import run_full_evaluation, verify_hardware_metrics
+        data = run_full_evaluation()
+        verify_hardware_metrics(data)
+        for entry in data['storage_overhead_validation']:
+            self.assertTrue(entry['complies_less_than_0_48_pct'])
+            self.assertLess(entry['normalized_overhead_pct'], 0.48)
+        self.assertTrue(data['timing_analysis']['timing_met_28nm'])
+        self.assertTrue(data['timing_analysis']['timing_met_7nm'])
+        self.assertLessEqual(data['timing_analysis']['total_cam_critical_path_28nm_ps'], 400.0)
+        for rtl_name, rtl_path in data['exported_rtl_files'].items():
+            self.assertTrue(os.path.exists(rtl_path))
+
+
+
+    def test_12_advanced_attacks_suite(self):
+        """Test the multi-vector attack suite across all 4 attack models."""
+        from advanced_attacks import (
+            FlushReloadAttack,
+            FlushFlushAttack,
+            PrimeProbeAttack,
+            PrimeReprimeProbeAttack
+        )
+        
+        # 1. Flush+Reload: Baseline vulnerable, TreasureCache neutralized
+        fr_base = FlushReloadAttack(mode='none').run_experiment(rounds=10)
+        self.assertEqual(fr_base.verdict, "VULNERABLE")
+        self.assertGreaterEqual(fr_base.timing_delta, 100.0)
+        fr_tc = FlushReloadAttack(mode='treasure_cache').run_experiment(rounds=10)
+        self.assertEqual(fr_tc.verdict, "NEUTRALIZED")
+        self.assertLessEqual(fr_tc.timing_delta, 5.0)
+
+        # 2. Flush+Flush: Baseline 50-cycle gap, TreasureCache 0-cycle gap
+        ff_base = FlushFlushAttack(mode='none').run_experiment(rounds=10)
+        self.assertEqual(ff_base.verdict, "VULNERABLE")
+        self.assertEqual(ff_base.timing_delta, 50.0)
+        ff_tc = FlushFlushAttack(mode='treasure_cache').run_experiment(rounds=10)
+        self.assertEqual(ff_tc.verdict, "NEUTRALIZED")
+        self.assertEqual(ff_tc.timing_delta, 0.0)
+
+        # 3. Prime+Probe: Baseline vulnerable, TreasureCache neutralized
+        pp_base = PrimeProbeAttack(mode='none').run_experiment(rounds=10)
+        self.assertEqual(pp_base.verdict, "VULNERABLE")
+        self.assertGreaterEqual(pp_base.timing_delta, 100.0)
+        pp_tc = PrimeProbeAttack(mode='treasure_cache').run_experiment(rounds=10)
+        self.assertEqual(pp_tc.verdict, "NEUTRALIZED")
+        self.assertLessEqual(pp_tc.timing_delta, 5.0)
+
+        # 4. Prime+Reprime+Probe: Cond-1 only vulnerable, TreasureCache (C1+C2) neutralized
+        prp_c1 = PrimeReprimeProbeAttack(mode='treasure_cache', cond1_only=True).run_experiment(rounds=10)
+        self.assertEqual(prp_c1.verdict, "VULNERABLE")
+        self.assertGreaterEqual(prp_c1.timing_delta, 100.0)
+        prp_tc = PrimeReprimeProbeAttack(mode='treasure_cache', cond1_only=False).run_experiment(rounds=10)
+        self.assertEqual(prp_tc.verdict, "NEUTRALIZED")
+        self.assertLessEqual(prp_tc.timing_delta, 5.0)
+
+
 if __name__ == '__main__':
     unittest.main()

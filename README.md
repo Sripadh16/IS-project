@@ -3,7 +3,7 @@
 > **Course Project**: Research Paper Analysis, Critical Evaluation & Experimental Validation  
 > **Assigned Paper**: *"TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks"* (IEEE Transactions on Dependable and Secure Computing, Vol. 21, No. 5, Sept./Oct. 2024 [1])  
 > **Original Authors**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren  
-> **Analysis Team**: Kontham Sripadha (Lead Analyst & Simulation Engineer), and Project Analysis Group 06  
+> **Analysis Team**: Sreekar Tirumala (CS23I1034), Kontham Sripadha (CS23I1018), and A Venu Vivek (CS23I1015) — Group 06  
 
 ---
 
@@ -115,4 +115,4 @@ python package_submission.py
 
 ## 👥 Authors & Attribution
 - **Original Research**: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (*IEEE Transactions on Dependable and Secure Computing*, Vol. 21, No. 5, Sept./Oct. 2024 [1]).
-- **Research Analysis, Independent Critical Evaluation & Ada-EHB Extension**: Kontham Sripadha and Course Analysis Team 06.
+- **Research Analysis, Independent Critical Evaluation & Ada-EHB/Ada-EHB+ Extensions**: Sreekar Tirumala (CS23I1034), Kontham Sripadha (CS23I1018), and A Venu Vivek (CS23I1015) — Analysis Group 06.

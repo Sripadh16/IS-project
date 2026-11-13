@@ -171,7 +171,7 @@ def generate_document():
     meta_runs = [
         ("Course: ", True), ("Information Security / Advanced Computer Architecture\n", False),
         ("Original Paper Authors: ", True), ("Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (IEEE TDSC, Sept./Oct. 2024 [1])\n", False),
-        ("Team Members: ", True), ("Kontham Sripadha (Lead Analyst & Simulation Engineer), and Project Analysis Group 06\n", False),
+        ("Team Members: ", True), ("Sreekar Tirumala (CS23I1034), Kontham Sripadha (CS23I1018), and A Venu Vivek (CS23I1015) — Project Analysis Group 06\n", False),
         ("Document Status: ", True), ("Comprehensive Technical Report (Final Submission Deliverable)\n", False),
     ]
     for text, is_bold in meta_runs:
@@ -585,10 +585,9 @@ def generate_document():
 
     headers_team = ["Team Member", "Assigned Role", "Core Responsibilities & Implementation Artifacts", "Defense Presentation Focus"]
     data_team = [
-        ["Kontham Sripadha", "Lead Analyst & Simulation Engineer", "Architectural modeling of inclusive cache hierarchy, implementation of 10-test verified simulator (`cache_model.py`, `attacks.py`), benchmark automation, and graph generation.", "Live simulator demonstration, experimental methodology, and quantitative evaluation."],
-        ["Team Member 2", "Security & Threat Analyst", "Taxonomy of cross-core cache attacks (Flush+Reload, Prime+Probe, Evict+Time), formal evaluation of Constant-Time Flush (CT-Flush), and threat model definition.", "Explaining the microarchitectural timing problem, attack taxonomy, and CT-Flush mechanics."],
-        ["Team Member 3", "Architecture & Prior Work Specialist", "Comparative analysis of prior defense schemes (Intel CAT, DAWG, CEASER, ScatterCache), evaluation of inclusive cache back-invalidation invariants, and review of gem5 results.", "Presenting limitations of prior defenses and TreasureCache EHB architecture."],
-        ["Team Member 4", "Extension & Documentation Lead", "Conceptualization and formal mathematical specification of Ada-EHB (retention scoring, token-bucket burst rate limiter, pseudocode), technical documentation compilation.", "Defending the Ada-EHB extension, critical assessment of research gaps, and concluding remarks."]
+        ["Sreekar Tirumala (CS23I1034)", "Lead Architectural Analyst & Ada-EHB+ Extension Lead", "Conceptualization, mathematical formulation, and algorithm implementation of Ada-EHB and Ada-EHB+ (dynamic retention scoring R(k), dynamic elastic domain quota DEDQ, Shannon entropy profiler), technical documentation and report integration.", "Presenting the shared-memory contention vulnerability, formal Ada-EHB+ mathematical specification, and critical assessment of prior defenses."],
+        ["Kontham Sripadha (CS23I1018)", "Lead Simulation Engineer & Benchmark Architect", "Cycle-calibrated architectural modeling of inclusive cache hierarchy (`cache_model.py`, `attacks.py`), execution of 5-seed benchmark trials, publication-quality figure generation, and 20-test master regression suite (`test_advanced_suite.py`).", "Live simulator demonstration, experimental methodology, and quantitative evaluation of cache latencies and residency."],
+        ["A Venu Vivek (CS23I1015)", "Security & Threat Modeling Specialist", "Formal taxonomy and implementation of cross-core cache attacks (Flush+Reload, Flush+Flush, Prime+Probe, Prime+Reprime+Probe in `advanced_attacks.py`), Constant-Time Flush (CT-Flush) verification, and hardware synthesis evaluation (`hardware_evaluation.py`).", "Explaining cross-core cache side-channel attack mechanisms, CT-Flush timing invariance, and silicon area/power feasibility analysis."]
     ]
     tbl_team = doc.add_table(rows=1, cols=4)
     format_table(tbl_team, [1.4, 1.4, 2.1, 1.6], headers_team, data_team)

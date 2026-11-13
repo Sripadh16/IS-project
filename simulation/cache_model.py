@@ -407,13 +407,25 @@ class MultiCoreCacheSystem:
         """
         Simulates flush instruction.
         When EHB is present, CT-Flush enforces a predefined constant waiting period (~70 cycles).
+        Additionally, per Condition 1 (Section V-C2), evictions caused by flush instructions
+        that had active private-cache sharers are securely placed into the EHB.
         """
         block = addr // LINE_SIZE
-        cached = self._invalidate_private(block)
-        cached = (self.llc[self._set(block)].pop(block, None) is not None) or cached
+        had_sharers = self._invalidate_private(block)
+        in_llc = (self.llc[self._set(block)].pop(block, None) is not None)
+        cached = had_sharers or in_llc
         if self.ehb:
-            cached = (self.ehb.entries.pop(block, None) is not None) or cached
+            if had_sharers:
+                owners = self.owners.get(block, set())
+                is_sens = block in self.sensitive
+                if self.ehb.insert(block, owners, is_sens, self.time):
+                    self.stats['ehb_inserted'] += 1
+                self.stats['ehb_eligible'] += 1
+            else:
+                cached = (self.ehb.entries.pop(block, None) is not None) or cached
+            latency = self.LATENCY_CT_FLUSH
+        else:
+            latency = 95 if cached else 45
             
-        latency = self.LATENCY_CT_FLUSH if self.ehb else (95 if cached else 45)
         self.time += latency
         return latency

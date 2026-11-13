@@ -126,7 +126,7 @@ def generate_presentation():
     
     p_sub = tf1.add_paragraph()
     p_sub.text = "Original Paper Authors: Mengming Li, Kai Bu, Chenlu Miao, and Kui Ren (IEEE TDSC 2024 [1])\n" \
-                 "Team 06: Kontham Sripadha (Lead Analyst & Simulation Engineer), and Research Group"
+                 "Team 06: Sreekar Tirumala (CS23I1034), Kontham Sripadha (CS23I1018), and A Venu Vivek (CS23I1015)"
     p_sub.font.name = "Calibri"
     p_sub.font.size = Pt(15)
     p_sub.font.color.rgb = RGBColor(220, 230, 242)
@@ -134,7 +134,7 @@ def generate_presentation():
     set_speaker_notes(
         s1,
         "SPEAKER (Lead / Introduction):\n"
-        "Welcome everyone. Today our team is presenting our research analysis and experimental validation of the paper "
+        "Welcome everyone. Today our team—Sreekar Tirumala, Kontham Sripadha, and A Venu Vivek—presents our comprehensive research analysis and experimental validation of the paper "
         "'TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks', published in IEEE TDSC in 2024. "
         "In this presentation, we will walk through the microarchitectural root problem of cross-core cache timing channels, "
         "evaluate TreasureCache's innovative paradigm of hiding evictions rather than preventing them, discuss our critical assessment, "
@@ -586,48 +586,46 @@ def generate_presentation():
     add_header(s13, "Team Member Roles & Individual Contributions")
     
     add_card(
-        s13, Inches(0.8), Inches(1.6), Inches(5.6), Inches(2.5),
-        "Kontham Sripadha (Lead Simulation Engineer)",
+        s13, Inches(0.8), Inches(1.6), Inches(3.65), Inches(5.2),
+        "Sreekar Tirumala\n(CS23I1034)\nLead Architectural Analyst",
         [
-            "• Implemented multi-core cache hierarchy simulator (`cache_model.py`, `attacks.py`).",
-            "• Built automated benchmarking suite with 5 random seeds (`run_experiments.py`).",
-            "• Generated publication-quality figures from verified simulator output."
+            "• Conceptualized & formulated Ada-EHB and Ada-EHB+ extensions.",
+            "• Designed Dynamic Elastic Domain Quota (DEDQ) for asymmetric multi-tenant cloud workloads.",
+            "• Implemented Sliding-Window Shannon Entropy Profiler to detect eviction-set sweeps.",
+            "• Authored comprehensive technical documentation & architectural report.",
+            "• Presentation Focus: Shared-memory vulnerability, Ada-EHB+ design, and trade-off analysis."
         ]
     )
     add_card(
-        s13, Inches(6.8), Inches(1.6), Inches(5.7), Inches(2.5),
-        "Team Member 2 (Security & Threat Analyst)",
+        s13, Inches(4.8), Inches(1.6), Inches(3.65), Inches(5.2),
+        "Kontham Sripadha\n(CS23I1018)\nLead Simulation Engineer",
         [
-            "• Formulated cross-core threat model & cryptographic attack analysis.",
-            "• Detailed evaluation of Flush+Flush, Flush+Reload, and Prime+Probe vectors.",
-            "• Assessed Constant-Time Flush (CT-Flush) waiting period mechanics."
+            "• Architected multi-core inclusive cache hierarchy simulator (`cache_model.py`, `attacks.py`).",
+            "• Engineered 5-seed automated statistical benchmark suite (100 trials per config).",
+            "• Generated publication-quality residency & timing distributions (Figures 1, 2, 3).",
+            "• Developed 20-test master regression suite (`test_advanced_suite.py`).",
+            "• Presentation Focus: Live terminal demo, experimental methodology, and latency metrics."
         ]
     )
     add_card(
-        s13, Inches(0.8), Inches(4.3), Inches(5.6), Inches(2.5),
-        "Team Member 3 (Architecture Analyst)",
+        s13, Inches(8.8), Inches(1.6), Inches(3.65), Inches(5.2),
+        "A Venu Vivek\n(CS23I1015)\nSecurity & Threat Specialist",
         [
-            "• Evaluated inclusive cache back-invalidation invariants.",
-            "• Comparative survey of prior randomized mapping (CEASER) & partitioning (CAT) defenses.",
-            "• Reviewed gem5 SPEC CPU2017 benchmark results and storage overhead."
-        ]
-    )
-    add_card(
-        s13, Inches(6.8), Inches(4.3), Inches(5.7), Inches(2.5),
-        "Team Member 4 (Extension & Documentation Lead)",
-        [
-            "• Conceptualized and mathematically formulated Ada-EHB retention scoring.",
-            "• Designed token-bucket burst rate-limiting algorithm and pseudocode.",
-            "• Compiled comprehensive technical documentation and presentation deck."
+            "• Implemented complete 4-vector attack suite: Flush+Reload, Flush+Flush, Prime+Probe, PRP.",
+            "• Proved necessity of Condition 2 against Prime+Reprime+Probe attacks (closing 167-cyc leak).",
+            "• Verified Constant-Time Flush (CT-Flush at 70 cycles) timing invariance.",
+            "• Synthesized Verilog RTL (CAM, ALU, Limiter) & evaluated silicon feasibility (TSMC 28nm/7nm).",
+            "• Presentation Focus: Cross-core attack taxonomy, CT-Flush mechanics, and RTL feasibility."
         ]
     )
     
     set_speaker_notes(
         s13,
-        "SPEAKER (All Members - Transition Segment):\n"
-        "Slide 13 details our individual contributions. Kontham Sripadha served as Lead Simulation Engineer, implementing the cache simulator "
-        "and benchmark pipeline; Member 2 led threat modeling and CT-Flush analysis; Member 3 analyzed prior defenses and gem5 results; "
-        "and Member 4 formulated the Ada-EHB retention score algorithm and compiled documentation."
+        "SPEAKER (All Members - Transition & Individual Contributions):\n"
+        "Slide 13 details our individual contributions across Group 06: Sreekar Tirumala led the architectural analysis, "
+        "discovering the shared-memory contention flaw and formulating the Ada-EHB/Ada-EHB+ extensions; Kontham Sripadha engineered the "
+        "cycle-accurate multi-core simulator, benchmark pipeline across 5 random seeds, and publication figures; and A Venu Vivek implemented the "
+        "4-vector attack suite (Flush+Reload, Flush+Flush, Prime+Probe, PRP), validated CT-Flush, and developed the synthesizable Verilog RTL models."
     )
 
     # =============================================================

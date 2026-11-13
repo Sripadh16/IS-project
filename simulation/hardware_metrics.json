@@ -1,0 +1,312 @@
+{
+  "metadata": {
+    "title": "TreasureCache & Ada-EHB Hardware Synthesis & Feasibility Evaluation",
+    "standards": [
+      "IEEE TDSC 2024",
+      "ISCA / MICRO Architectural Review"
+    ],
+    "target_frequency_ghz": 2.5,
+    "clock_period_ns": 0.4,
+    "buffer_capacity_lines": 64,
+    "line_size_bytes": 64,
+    "tag_width_bits": 64,
+    "num_security_domains": 4
+  },
+  "gate_counts": {
+    "base_treasure_cache_nand2_ge": 74859.3,
+    "ada_ehb_extension_nand2_ge": 3724.0,
+    "total_system_nand2_ge": 78583.3,
+    "ada_extension_overhead_pct": 4.97,
+    "base_subsystems": [
+      {
+        "name": "CAM Tag Array (64-entry x 64-bit)",
+        "nand2_gates": 12392.8,
+        "description": "10T CAM bitcells, precharge matchlines, SL drivers, and 64-to-6 priority encoder"
+      },
+      {
+        "name": "Data Store (64-entry x 512-bit SRAM)",
+        "nand2_gates": 51552.0,
+        "description": "32,768-bit SRAM storage array with periphery, column muxes, and sense amplifiers"
+      },
+      {
+        "name": "Domain Vectors & Eligibility Check",
+        "nand2_gates": 1920.0,
+        "description": "Per-entry 4-bit domain masks and parallel subset eligibility checkers"
+      },
+      {
+        "name": "Age Tracking & LRU Selection Tree",
+        "nand2_gates": 8152.0,
+        "description": "16-bit cycle timestamp registers and 6-stage tournament minimum-value tree"
+      },
+      {
+        "name": "Control FSM & Per-Domain Quota Counters",
+        "nand2_gates": 842.5,
+        "description": "LLC eviction handshake, quota tracking counters, and global threshold registers"
+      }
+    ],
+    "ada_subsystems": [
+      {
+        "name": "4-Bit Saturating Frequency Counters",
+        "nand2_gates": 2176.0,
+        "description": "64 parallel 4-bit saturating hit counters (0..15) with hit increment logic"
+      },
+      {
+        "name": "Sensitivity & Sticky Residency Flags",
+        "nand2_gates": 352.0,
+        "description": "64 single-bit registers carrying OS/MPK security-critical classification"
+      },
+      {
+        "name": "Dynamic Retention Scoring ALU",
+        "nand2_gates": 816.0,
+        "description": "Fixed-point ALU with 16-entry piecewise-linear Log/Reciprocal ROM and numerator scaling"
+      },
+      {
+        "name": "Token-Bucket Rate Limiter",
+        "nand2_gates": 380.0,
+        "description": "Multi-domain (4 domains) token registers, 125-cycle prescaler, and DRAM bypass logic"
+      }
+    ]
+  },
+  "silicon_area_nodes": [
+    {
+      "process_name": "TSMC 28nm HPM",
+      "feature_size_nm": 28,
+      "nand2_area_um2": 0.49,
+      "sram_bit_area_um2": 0.127,
+      "cam_bit_area_um2": 0.242,
+      "leakage_per_gate_nw": 10.4,
+      "vdd_volts": 0.9,
+      "clock_period_ns": 0.4,
+      "total_area_um2": 17442.99,
+      "total_area_mm2": 0.017443,
+      "llc_2mb_area_mm2": 5.2,
+      "area_overhead_pct": 0.3354,
+      "leakage_power_mw": 0.8173
+    },
+    {
+      "process_name": "TSMC 7nm FinFET (N7)",
+      "feature_size_nm": 7,
+      "nand2_area_um2": 0.055,
+      "sram_bit_area_um2": 0.027,
+      "cam_bit_area_um2": 0.05,
+      "leakage_per_gate_nw": 1.4,
+      "vdd_volts": 0.75,
+      "clock_period_ns": 0.4,
+      "total_area_um2": 2596.84,
+      "total_area_mm2": 0.002597,
+      "llc_2mb_area_mm2": 1.15,
+      "area_overhead_pct": 0.2258,
+      "leakage_power_mw": 0.11
+    }
+  ],
+  "storage_overhead_validation": [
+    {
+      "cores_c": 1,
+      "global_threshold_g": 32,
+      "physical_addr_m": 64,
+      "capacity_lines": 32,
+      "buffer_storage_bits": 18602,
+      "buffer_storage_kb": 2.271,
+      "llc_capacity_bits": 16000000,
+      "normalized_overhead_pct": 0.1163,
+      "equation4_approx_pct": 0.1162,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 1,
+      "global_threshold_g": 64,
+      "physical_addr_m": 64,
+      "capacity_lines": 64,
+      "buffer_storage_bits": 37260,
+      "buffer_storage_kb": 4.548,
+      "llc_capacity_bits": 16000000,
+      "normalized_overhead_pct": 0.2329,
+      "equation4_approx_pct": 0.2328,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 1,
+      "global_threshold_g": 128,
+      "physical_addr_m": 64,
+      "capacity_lines": 128,
+      "buffer_storage_bits": 74638,
+      "buffer_storage_kb": 9.111,
+      "llc_capacity_bits": 16000000,
+      "normalized_overhead_pct": 0.4665,
+      "equation4_approx_pct": 0.4664,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 2,
+      "global_threshold_g": 32,
+      "physical_addr_m": 64,
+      "capacity_lines": 64,
+      "buffer_storage_bits": 37263,
+      "buffer_storage_kb": 4.549,
+      "llc_capacity_bits": 32000000,
+      "normalized_overhead_pct": 0.1164,
+      "equation4_approx_pct": 0.1164,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 2,
+      "global_threshold_g": 64,
+      "physical_addr_m": 64,
+      "capacity_lines": 128,
+      "buffer_storage_bits": 74642,
+      "buffer_storage_kb": 9.112,
+      "llc_capacity_bits": 32000000,
+      "normalized_overhead_pct": 0.2333,
+      "equation4_approx_pct": 0.2332,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 2,
+      "global_threshold_g": 128,
+      "physical_addr_m": 64,
+      "capacity_lines": 256,
+      "buffer_storage_bits": 149525,
+      "buffer_storage_kb": 18.253,
+      "llc_capacity_bits": 32000000,
+      "normalized_overhead_pct": 0.4673,
+      "equation4_approx_pct": 0.4672,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 4,
+      "global_threshold_g": 32,
+      "physical_addr_m": 64,
+      "capacity_lines": 128,
+      "buffer_storage_bits": 74649,
+      "buffer_storage_kb": 9.112,
+      "llc_capacity_bits": 64000000,
+      "normalized_overhead_pct": 0.1166,
+      "equation4_approx_pct": 0.1166,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 4,
+      "global_threshold_g": 64,
+      "physical_addr_m": 64,
+      "capacity_lines": 256,
+      "buffer_storage_bits": 149534,
+      "buffer_storage_kb": 18.254,
+      "llc_capacity_bits": 64000000,
+      "normalized_overhead_pct": 0.2336,
+      "equation4_approx_pct": 0.2336,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 4,
+      "global_threshold_g": 128,
+      "physical_addr_m": 64,
+      "capacity_lines": 512,
+      "buffer_storage_bits": 299555,
+      "buffer_storage_kb": 36.567,
+      "llc_capacity_bits": 64000000,
+      "normalized_overhead_pct": 0.4681,
+      "equation4_approx_pct": 0.468,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 8,
+      "global_threshold_g": 32,
+      "physical_addr_m": 64,
+      "capacity_lines": 256,
+      "buffer_storage_bits": 149549,
+      "buffer_storage_kb": 18.255,
+      "llc_capacity_bits": 128000000,
+      "normalized_overhead_pct": 0.1168,
+      "equation4_approx_pct": 0.1168,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 8,
+      "global_threshold_g": 64,
+      "physical_addr_m": 64,
+      "capacity_lines": 512,
+      "buffer_storage_bits": 299574,
+      "buffer_storage_kb": 36.569,
+      "llc_capacity_bits": 128000000,
+      "normalized_overhead_pct": 0.234,
+      "equation4_approx_pct": 0.234,
+      "complies_less_than_0_48_pct": true
+    },
+    {
+      "cores_c": 8,
+      "global_threshold_g": 128,
+      "physical_addr_m": 64,
+      "capacity_lines": 1024,
+      "buffer_storage_bits": 600127,
+      "buffer_storage_kb": 73.258,
+      "llc_capacity_bits": 128000000,
+      "normalized_overhead_pct": 0.4688,
+      "equation4_approx_pct": 0.4688,
+      "complies_less_than_0_48_pct": true
+    }
+  ],
+  "timing_analysis": {
+    "clock_freq_ghz": 2.5,
+    "clock_period_ps": 400.0,
+    "stages": [
+      {
+        "stage_name": "Search Line Driver & Distribution",
+        "delay_28nm_ps": 45.0,
+        "delay_7nm_ps": 18.0,
+        "description": "Precharge release and differential SL/SL_b distribution across 64 CAM columns"
+      },
+      {
+        "stage_name": "10T CAM Bitcell Matchline Discharge",
+        "delay_28nm_ps": 110.0,
+        "delay_7nm_ps": 42.0,
+        "description": "Parallel 64-bit bitwise comparison and NOR matchline pull-down on mismatch"
+      },
+      {
+        "stage_name": "Matchline Sense Amp / Buffer Strobe",
+        "delay_28nm_ps": 60.0,
+        "delay_7nm_ps": 25.0,
+        "description": "Differential sensing and inverter threshold detection of matchline transition"
+      },
+      {
+        "stage_name": "64-to-6 Priority Encoder Tree",
+        "delay_28nm_ps": 135.0,
+        "delay_7nm_ps": 58.0,
+        "description": "3-level lookahead priority logic tree resolving lowest matching buffer entry"
+      },
+      {
+        "stage_name": "Setup Time & Hit Latch/Register",
+        "delay_28nm_ps": 30.0,
+        "delay_7nm_ps": 12.0,
+        "description": "DFF setup margin and output multiplexer distribution to LLC controller"
+      }
+    ],
+    "total_cam_critical_path_28nm_ps": 380.0,
+    "total_cam_critical_path_7nm_ps": 155.0,
+    "slack_28nm_ps": 20.0,
+    "slack_7nm_ps": 245.0,
+    "timing_met_28nm": true,
+    "timing_met_7nm": true,
+    "alu_latency_28nm_ps": 320.0,
+    "alu_latency_7nm_ps": 125.0
+  },
+  "power_analysis": {
+    "dynamic_energy_per_search_28nm_pj": 1.763,
+    "dynamic_energy_per_search_7nm_pj": 0.277,
+    "static_leakage_28nm_mw": 0.82,
+    "static_leakage_7nm_mw": 0.11,
+    "access_activity_factor": 0.001,
+    "ehb_dynamic_power_28nm_mw": 0.004,
+    "ehb_dynamic_power_7nm_mw": 0.001,
+    "ehb_total_power_28nm_mw": 0.824,
+    "ehb_total_power_7nm_mw": 0.111,
+    "llc_2mb_active_power_mw": 3000.0,
+    "ehb_power_overhead_pct_28nm": 0.0275,
+    "ehb_power_overhead_pct_7nm": 0.0037,
+    "microarchitectural_filtering_explanation": "In traditional processors, CAM structures (such as TLBs or L1 tag stores) operate on every memory instruction (activity factor alpha ~ 0.3 - 1.0). In contrast, the TreasureCache / Ada-EHB buffer is situated strictly adjacent to the LLC controller. Hits in private L1 (95%) and private L2 (80%) shield the LLC. Furthermore, the EHB CAM is queried ONLY on (1) LLC misses before DRAM dispatch, and (2) qualifying LLC evictions. In standard SPEC CPU2017 workloads, LLC misses and evictions account for less than 0.1% of total memory cycles (alpha <= 0.001). Consequently, average dynamic CAM power is under 2.2 mW in 28nm (0.45 mW in 7nm), representing less than 0.10% of total LLC power."
+  },
+  "exported_rtl_files": {
+    "cam_tag_cell.v": "C:\\Users\\Sreekar_Tirumala\\Documents\\College\\IS\\IS-project\\simulation\\rtl\\cam_tag_cell.v",
+    "retention_alu.v": "C:\\Users\\Sreekar_Tirumala\\Documents\\College\\IS\\IS-project\\simulation\\rtl\\retention_alu.v",
+    "token_bucket_limiter.v": "C:\\Users\\Sreekar_Tirumala\\Documents\\College\\IS\\IS-project\\simulation\\rtl\\token_bucket_limiter.v"
+  }
+}

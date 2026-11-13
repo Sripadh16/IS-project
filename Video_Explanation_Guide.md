@@ -27,14 +27,14 @@ To achieve maximum marks according to the course rubric, strictly adhere to the 
 
 ## 2. Timing Breakdown & Slide Mapping
 
-| Section | Slides | Target Time | Core Focus |
+| Section | Slides & Presenter | Target Time | Core Technical Focus |
 | :--- | :---: | :---: | :--- |
-| **I. Introduction & Threat Model** | Slides 1–4 | 0:00 – 3:30 | Memory hierarchy timing gaps, Flush+Reload vs. Prime+Probe, existing defense limitations (CAT, ScatterCache). |
-| **II. TreasureCache Architecture** | Slides 5–7 | 3:30 – 6:30 | Eviction-Hidden Buffer (EHB), Dual-Condition Placement, Domain Ownership Quota, Take-and-Reload, Constant-Time Flush (CT-Flush). |
-| **III. Critical Assessment & Research Gaps** | Slide 8 | 6:30 – 8:00 | Multi-domain shared memory contention vulnerability, static CAM limits, timing jitter, and non-inclusive caches. |
-| **IV. Proposed Extension: Ada-EHB** | Slides 9–10 | 8:00 – 10:15 | Dynamic retention formula $R(k)$, sticky residency mechanism, token-bucket burst limiter, and hardware budget. |
-| **V. Experimental Results & Live Code Demo** | Slides 11–12 + Terminal | 10:15 – 13:00 | Verification across 5 random seeds: Domain-isolated residency, Evict+Time mitigation, and Shared-memory contention defense (8/8 retained vs 0/8 in TC). |
-| **VI. Summary, Future Work & References** | Slides 13–15 | 13:00 – 14:30 | Critical reflection, hardware overheads, future directions, and references. |
+| **I. Introduction & Threat Model** | Slides 1–2 (**Sreekar Tirumala**)<br>Slides 3–4 (**A Venu Vivek**) | 0:00 – 3:30 | Memory hierarchy timing gaps, inclusive cache invariants, Flush+Reload vs. Prime+Probe, existing defense trade-offs (CAT, ScatterCache). |
+| **II. TreasureCache Architecture** | Slides 5–6 (**Kontham Sripadha**)<br>Slide 7 (**A Venu Vivek**) | 3:30 – 6:30 | Eviction-Hidden Buffer (EHB), Dual-Condition Secure Placement, Domain Ownership Quotas, Take-and-Reload, Constant-Time Flush (CT-Flush). |
+| **III. Critical Assessment & Vulnerability** | Slide 8 (**Sreekar Tirumala**) | 6:30 – 8:00 | Multi-domain shared memory contention vulnerability (`owners={0, 1}`), static CAM limits, timing jitter, and non-inclusive caches. |
+| **IV. Proposed Extension: Ada-EHB / Ada-EHB+** | Slides 9–10 (**Sreekar Tirumala**) | 8:00 – 10:15 | Dynamic retention formula $R(k)$, sticky residency mechanism, token-bucket burst limiter, Dynamic Elastic Quota (DEDQ), and Shannon entropy profiler. |
+| **V. Experimental Results & Live Code Demo** | Slides 11–12 + Terminal (**Kontham Sripadha**) | 10:15 – 13:00 | Live verification across 5 seeds: Domain-isolated residency, Evict+Time mitigation, shared-memory defense, and live terminal demo of 20 unit tests. |
+| **VI. Contributions, Feasibility & Q&A** | Slide 13 (**A Venu Vivek**)<br>Slides 14–15 (**Sreekar Tirumala**) | 13:00 – 15:00 | Individual contribution matrix, synthesizable Verilog RTL analysis, trade-offs, concluding remarks, and defense Q&A. |
 
 ---
 
@@ -125,7 +125,7 @@ To achieve maximum marks according to the course rubric, strictly adhere to the 
 ---
 
 ### Live Code Demonstration (30–60 Seconds)
-- **Visual**: Switch to terminal in `c:\Users\sripa\Desktop\IS project`.
+- **Visual**: Switch to terminal in `C:\Users\Sreekar_Tirumala\Documents\College\IS\IS-project`.
 - **Presenter Action & Speech**:
   > *"Let us now switch to the terminal to verify the implementation. First, we execute our automated unit test suite by running: `python simulation/test_simulation.py`.*  
   *(Run command, observe `Ran 10 tests in 0.005s - OK`).*  
