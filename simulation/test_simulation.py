@@ -25,7 +25,7 @@ from cache_model import (
     AdaptiveEvictionHiddenBuffer,
     LINE_SIZE
 )
-from attacks import force_llc_eviction, run_residency_trial
+from attacks import force_llc_eviction
 
 
 class ComprehensiveCacheTests(unittest.TestCase):
@@ -76,7 +76,7 @@ class ComprehensiveCacheTests(unittest.TestCase):
         self.assertTrue(sys_model.ehb.contains(addr1 // LINE_SIZE))
         
         # Reload addr1 from EHB: installs into LLC with from_ehb=True
-        lat, lvl = sys_model.read_address(core_id=0, addr=addr1, domain_id=0, is_sensitive=True)
+        _, lvl = sys_model.read_address(core_id=0, addr=addr1, domain_id=0, is_sensitive=True)
         self.assertEqual(lvl, 'EHB_HIT')
         
         # Verify block was installed into LLC
@@ -169,7 +169,7 @@ class ComprehensiveCacheTests(unittest.TestCase):
         self.assertTrue(data['timing_analysis']['timing_met_28nm'])
         self.assertTrue(data['timing_analysis']['timing_met_7nm'])
         self.assertLessEqual(data['timing_analysis']['total_cam_critical_path_28nm_ps'], 400.0)
-        for rtl_name, rtl_path in data['exported_rtl_files'].items():
+        for rtl_path in data['exported_rtl_files'].values():
             self.assertTrue(os.path.exists(rtl_path))
 
 

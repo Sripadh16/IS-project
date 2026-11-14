@@ -126,7 +126,7 @@ class TestFormalVerification(unittest.TestCase):
         """Validates that generate_analytical_validation writes a complete, valid JSON artifact."""
         test_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_analytical_validation.json")
         try:
-            report = generate_analytical_validation(output_path=test_json)
+            generate_analytical_validation(output_path=test_json)
             self.assertTrue(os.path.exists(test_json))
             with open(test_json, "r") as f:
                 data = json.load(f)

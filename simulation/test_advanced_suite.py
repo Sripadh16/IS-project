@@ -27,11 +27,9 @@ Validates 20 automated unit tests covering:
   20. Hardware synthesis & formal verification consistency (storage overhead < 0.5%, CAM <= 0.4 ns).
 """
 
-import collections
 import json
 import math
 import os
-import random
 import sys
 import unittest
 
@@ -51,11 +49,8 @@ from attacks import force_llc_eviction, run_evict_and_time_simulation
 try:
     from ada_ehb_plus import (
         AdaEHBPlusBuffer,
-        BufferEntryPlus,
-        MultiCoreCacheSystemPlus,
         ShannonEntropyProfiler,
         SensitivityLevel,
-        SENSITIVITY_WEIGHTS,
         run_revocation_floor_trial
     )
     ADA_EHB_PLUS_LOADED = True
@@ -68,9 +63,7 @@ try:
         FlushReloadAttack,
         FlushFlushAttack,
         PrimeProbeAttack,
-        PrimeReprimeProbeAttack,
-        AttackResult,
-        run_all_attacks_comparison
+        PrimeReprimeProbeAttack
     )
     ADVANCED_ATTACKS_LOADED = True
 except ImportError:

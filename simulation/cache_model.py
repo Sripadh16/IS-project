@@ -17,7 +17,7 @@ Models:
 
 import math
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 LINE_SIZE = 64

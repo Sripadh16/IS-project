@@ -42,7 +42,6 @@ Exact Mathematical Formulations from the Paper:
 import json
 import math
 import os
-import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -335,7 +334,6 @@ def run_monte_carlo_invalidation_experiment(
     theo_std = math.sqrt(theo_var)
 
     emp_mean = float(np.mean(samples))
-    emp_var = float(np.var(samples, ddof=1))
     emp_std = float(np.std(samples, ddof=1))
 
     # Evaluate CDF comparison over k = 1 .. max_k_eval
@@ -627,7 +625,7 @@ def print_verification_summary(report: Dict[str, Any]) -> None:
     print(f"{'g':<6} | {'k (TPR>0.5)':<12} | {'TPR @ k=89':<12} | {'Epoch (Cycles)':<16} | {'Slowdown':<10} | {'1-Core LLC %':<12} | {'8-Core LLC %':<12}")
     print("-" * 80)
     grid = report["comprehensive_parameter_sweep"]["by_threshold"]
-    for g_key, g_data in grid.items():
+    for g_data in grid.values():
         g_val = g_data["g"]
         k_min = g_data["min_k_tpr_0.5"]
         tpr89 = f"{g_data['tpr_at_k89']:.4f}"

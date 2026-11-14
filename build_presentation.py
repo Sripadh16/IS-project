@@ -5,12 +5,9 @@ and a dedicated references slide.
 """
 
 import os
-import json
-import pptx
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
 
@@ -93,10 +90,6 @@ def generate_presentation():
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     blank_layout = prs.slide_layouts[6]
-
-    sim_data_path = os.path.join(os.path.dirname(__file__), 'simulation', 'simulation_results.json')
-    with open(sim_data_path, 'r') as f:
-        sim_metrics = json.load(f)
 
     # =============================================================
     # SLIDE 1: TITLE SLIDE

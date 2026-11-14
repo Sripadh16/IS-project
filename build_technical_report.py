@@ -8,13 +8,12 @@ in-text citations, and explicit attribution.
 
 import os
 import json
-import docx
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
-from docx.oxml import OxmlElement, parse_xml
-from docx.oxml.ns import nsdecls, qn
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 
 
 COLOR_PRIMARY = RGBColor(27, 54, 93)      # Deep Navy #1B365D
@@ -513,7 +512,7 @@ def generate_document():
 
     headers_sim = ["Architecture Mode", "Domain-Isolated Residency (out of 8)", "Shared Churn Residency (out of 8)", "Evict+Time Gap (Cycles)", "Security Status"]
     data_sim = [
-        ["Unprotected Baseline", "0.0 / 8 (201.5 cyc)", "0.0 / 8 (201.5 cyc)", f"{gap_none:.2f} cycles", "Vulnerable (Severe Leakage)"],
+        ["Unprotected Baseline", f"0.0 / 8 ({none_lat:.1f} cyc)", f"0.0 / 8 ({none_lat:.1f} cyc)", f"{gap_none:.2f} cycles", "Vulnerable (Severe Leakage)"],
         ["TreasureCache [1]", f"{tc_res_iso:.1f} / 8 ({tc_lat_iso:.1f} cyc)", f"{tc_res_shared:.1f} / 8 ({tc_lat_shared:.1f} cyc)", f"{gap_tc:.2f} cycles", "Protected (Isolated); Vulnerable to Shared Churn"],
         ["Ada-EHB (Proposed)", f"{ada_res_iso:.1f} / 8 ({ada_lat_iso:.1f} cyc)", f"{ada_res_shared:.1f} / 8 ({ada_lat_shared:.1f} cyc)", f"{gap_ada:.2f} cycles", "Robustly Protected Across All Workloads"]
     ]

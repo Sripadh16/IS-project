@@ -36,19 +36,17 @@ Key Architectural Mechanisms in Ada-EHB+:
 import collections
 import math
 import os
-import random
 import sys
 import unittest
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import IntEnum
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Optional, Set, Tuple, Union
 
 # Ensure simulation directory is in import path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from cache_model import (
     LINE_SIZE,
-    BufferEntry,
     EvictionHiddenBuffer,
     AdaptiveEvictionHiddenBuffer,
     MultiCoreCacheSystem,

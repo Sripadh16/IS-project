@@ -8,8 +8,7 @@ Models:
   - Matched Evict+Time timing evaluation (comparing control vs post-eviction latencies)
 """
 
-import random
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from cache_model import MultiCoreCacheSystem, LINE_SIZE
 
 
@@ -58,7 +57,6 @@ def run_residency_trial(mode: str, capacity: int, churn: int, seed: int, working
     victim-owned lines from private attacker churn.
     """
     sys = MultiCoreCacheSystem(mode=mode, ehb_capacity=capacity, seed=seed, llc_sets=32, llc_ways=4)
-    rng = random.Random(seed)
     victim_addrs = [(0x100000 // LINE_SIZE + i) * LINE_SIZE for i in range(working_set)]
     
     # 1. Victim touches sensitive lines
@@ -154,7 +152,6 @@ def run_evict_and_time_simulation(mode: str = 'none', rounds: int = 50, seed: in
     """
     Matched control vs post-eviction victim timing measurement across identical sequences.
     """
-    rng = random.Random(seed)
     evicted_times = []
     control_times = []
     levels = []

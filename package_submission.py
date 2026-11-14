@@ -12,13 +12,18 @@ def package_submission():
     
     files_to_include = [
         "README.md",
+        "PROJECT_EXPLANATION.md",
         "TreasureCache_Research_Report.docx",
         "TreasureCache_Research_Report.pdf",
         "TreasureCache_Presentation.pptx",
         "TreasureCache_Presentation.pdf",
+        "simplified.docx",
+        "simplified.pdf",
         "Video_Explanation_Guide.md",
         "build_technical_report.py",
-        "build_presentation.py"
+        "build_presentation.py",
+        "build_simplified_doc.py",
+        "package_submission.py"
     ]
     
     sim_dir = os.path.join(base_dir, "simulation")
