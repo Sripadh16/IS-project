@@ -4,7 +4,7 @@
 > **Course**: Information Security / Hardware Security Capstone  
 > **Topic**: Critical Analysis and Extension of *"TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks"* (Mengming Li et al., IEEE TDSC Sept/Oct 2024)  
 > **Extensions**: Ada-EHB (Dynamic Retention Scoring) & Ada-EHB+ (Ada-EHB 2.0 with Elastic Cloud Quotas & Shannon Profiling)  
-> **Target Duration**: 12–15 Minutes (20 Slides)  
+> **Target Duration**: 10–12 Minutes (20 Slides, Concise & Plain English)  
 > **Format**: Slide Presentation + Live Code & Experimental Verification Walkthrough + Webcam Face Overlay  
 > **Speaking Format**: **Two Structured Rounds per Presenter**  
 > **Speaker Sequence**: **Kontham Sripadha (Intro)** &rarr; **Sreekar Tirumala** &rarr; **A Venu Vivek** &rarr; **Kontham Sripadha** &rarr; **Sreekar Tirumala** &rarr; **A Venu Vivek**  
