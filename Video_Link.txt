@@ -1,15 +1,18 @@
-# Course Project Explanation Video Link
+# Course Project Explanation Video Link & Video Inclusion Notice
 # Course: Information Security / Advanced Computer Architecture Capstone
 # Paper: TreasureCache: Hiding Cache Evictions Against Side-Channel Attacks (IEEE TDSC 2024)
 # Team 06:
-# - Kontham Sripadha (CS23I1018)
-# - Sreekar Tirumala (CS23I1034)
-# - A Venu Vivek (CS23I1015)
+# - Kontham Sripadha (CS23I1018) - Lead Simulation Engineer
+# - Sreekar Tirumala (CS23I1034) - Lead Architectural Analyst
+# - A Venu Vivek (CS23I1015) - Security & Threat Specialist
 
 ================================================================================
-EXPLANATION VIDEO RECORDING LINK:
-[PASTE YOUR GOOGLE DRIVE OR UNLISTED YOUTUBE VIDEO LINK HERE]
-Example: https://drive.google.com/file/d/YOUR_VIDEO_ID/view?usp=sharing
+EXPLANATION VIDEO INCLUSION NOTICE:
+1. Direct File in this Zip: "PROJECT_VIDEO.mov" (2.13 GB) is bundled directly
+   inside this submission package (Final_Project_Submission.zip).
+2. Online Backup / Streamable Link:
+   [PASTE YOUR GOOGLE DRIVE OR YOUTUBE LINK HERE IF DESIRED]
+   Example: https://drive.google.com/file/d/YOUR_VIDEO_ID/view?usp=sharing
 ================================================================================
 
 Presentation Duration: ~10 - 12 Minutes (20 Slides)

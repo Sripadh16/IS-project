@@ -3,3 +3,6 @@ __pycache__/
 .vscode/
 .idea/
 extracted_chatgpt/
+*.mov
+*.mp4
+Final_Project_Submission.zip
