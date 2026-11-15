@@ -12,18 +12,15 @@ def package_submission():
     
     files_to_include = [
         "README.md",
-        "PROJECT_EXPLANATION.md",
         "TreasureCache_Research_Report.docx",
         "TreasureCache_Research_Report.pdf",
         "TreasureCache_Presentation.pptx",
         "TreasureCache_Presentation.pdf",
-        "simplified.docx",
-        "simplified.pdf",
         "Video_Explanation_Guide.md",
         "build_technical_report.py",
+        "build_technical_report_pdf.py",
         "build_presentation.py",
-        "build_simplified_doc.py",
-        "package_submission.py"
+        "export_presentation.ps1"
     ]
     
     sim_dir = os.path.join(base_dir, "simulation")
@@ -35,6 +32,7 @@ def package_submission():
         "formal_verification.py",
         "hardware_evaluation.py",
         "run_experiments.py",
+        "generate_upgrade_plots.py",
         "test_simulation.py",
         "test_advanced_suite.py",
         "test_formal_verification.py",
@@ -46,6 +44,8 @@ def package_submission():
         "fig1_residency.png",
         "fig2_victim_latency.png",
         "fig3_shared_contention.png",
+        "fig4_multi_vector_attacks.png",
+        "fig5_hardware_breakdown.png",
         os.path.join("rtl", "cam_tag_cell.v"),
         os.path.join("rtl", "retention_alu.v"),
         os.path.join("rtl", "token_bucket_limiter.v")
