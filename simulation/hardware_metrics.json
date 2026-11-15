@@ -305,8 +305,8 @@
     "microarchitectural_filtering_explanation": "In traditional processors, CAM structures (such as TLBs or L1 tag stores) operate on every memory instruction (activity factor alpha ~ 0.3 - 1.0). In contrast, the TreasureCache / Ada-EHB buffer is situated strictly adjacent to the LLC controller. Hits in private L1 (95%) and private L2 (80%) shield the LLC. Furthermore, the EHB CAM is queried ONLY on (1) LLC misses before DRAM dispatch, and (2) qualifying LLC evictions. In standard SPEC CPU2017 workloads, LLC misses and evictions account for less than 0.1% of total memory cycles (alpha <= 0.001). Consequently, average dynamic CAM power is under 2.2 mW in 28nm (0.45 mW in 7nm), representing less than 0.10% of total LLC power."
   },
   "exported_rtl_files": {
-    "cam_tag_cell.v": "C:\\Users\\sripa\\Desktop\\IS project\\simulation\\rtl\\cam_tag_cell.v",
-    "retention_alu.v": "C:\\Users\\sripa\\Desktop\\IS project\\simulation\\rtl\\retention_alu.v",
-    "token_bucket_limiter.v": "C:\\Users\\sripa\\Desktop\\IS project\\simulation\\rtl\\token_bucket_limiter.v"
+    "cam_tag_cell.v": "C:\\Users\\Sreekar_Tirumala\\Documents\\College\\IS\\IS-project\\simulation\\rtl\\cam_tag_cell.v",
+    "retention_alu.v": "C:\\Users\\Sreekar_Tirumala\\Documents\\College\\IS\\IS-project\\simulation\\rtl\\retention_alu.v",
+    "token_bucket_limiter.v": "C:\\Users\\Sreekar_Tirumala\\Documents\\College\\IS\\IS-project\\simulation\\rtl\\token_bucket_limiter.v"
   }
 }
