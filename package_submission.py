@@ -17,6 +17,7 @@ def package_submission():
         "TreasureCache_Presentation.pptx",
         "TreasureCache_Presentation.pdf",
         "Video_Explanation_Guide.md",
+        "PRESENTATION_SCRIPT.md",
         "build_technical_report.py",
         "build_technical_report_pdf.py",
         "build_presentation.py",
