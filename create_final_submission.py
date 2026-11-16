@@ -24,6 +24,7 @@ def create_final_submission():
         "Video_Link.txt",
         "PRESENTATION_SCRIPT.md",
         "Video_Explanation_Guide.md",
+        "CODE_WALKTHROUGH_GUIDE.md",
         "PROJECT_EXPLANATION.md",
         "simplified.pdf",
         "simplified.docx",
